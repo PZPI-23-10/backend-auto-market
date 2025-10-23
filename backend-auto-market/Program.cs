@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using backend_auto_market.Extensions;
 using backend_auto_market.Persistence;
+using backend_auto_market.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -132,13 +133,14 @@ public class Program
         builder.Services.ConfigureDatabase(builder.Configuration);
         builder.Services.AddAuthorization();
         builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+        builder.Services.AddScoped<TokenService>();
 
         var app = builder.Build();
 
         var serviceScope = app.Services.CreateScope();
         var dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
         dataContext.Database.EnsureCreated();
-        
+
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
