@@ -8,7 +8,7 @@ public class User : BaseEntity
     public string Country { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
-    public DateTime BirthDate { get; set; }
+    public DateTime DateOfBirth { get; set; }
 
     public string? About { get; set; }
     public string? AvatarUrl { get; set; }
