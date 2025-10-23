@@ -2,13 +2,14 @@
 using backend_auto_market.Features.Users;
 using backend_auto_market.Persistence;
 using backend_auto_market.Persistence.Models;
+using backend_auto_market.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend_auto_market.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(DataContext dataContext, IConfiguration configuration) : ControllerBase
+public class AccountController(DataContext dataContext, IConfiguration configuration, TokenService tokenService) : ControllerBase
 {
     [HttpPost]
     [Route("RegisterUser")]
@@ -68,6 +69,7 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         if (user.Password != request.Password)
             return Unauthorized("Invalid Password.");
 
-        return Ok(user);
+        var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
+        return Ok(new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey));
     }
 }
