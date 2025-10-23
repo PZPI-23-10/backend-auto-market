@@ -3,5 +3,4 @@
 public record LoginUserRequest(
     string Email,
     string Password,
-    bool RememberMe
-);
+    bool RememberMe);
