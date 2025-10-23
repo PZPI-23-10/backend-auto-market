@@ -10,7 +10,8 @@ namespace backend_auto_market.Controllers;
 [Route("api/[controller]")]
 public class AccountController(DataContext dataContext, IConfiguration configuration) : ControllerBase
 {
-    [HttpPost("RegisterUser")]
+    [HttpPost]
+    [Route("RegisterUser")]
     public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
     {
         if (string.IsNullOrEmpty(request.Email) ||
@@ -48,5 +49,25 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         await dataContext.SaveChangesAsync();
 
         return Ok();
+    }
+
+    [HttpPost]
+    [Route("LoginUser")]
+    public async Task<IActionResult> LoginUser([FromBody] LoginUserRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+            return BadRequest("All fields are required.");
+
+        var user = dataContext.Users.FirstOrDefault(u => u.Email == request.Email);
+        if (user == null)
+            return Unauthorized("User with this email does not exist.");
+
+        if (user.IsGoogleAuth)
+            return BadRequest("This user is registered with Google authentication. Please use Google login.");
+        
+        if (user.Password != request.Password)
+            return Unauthorized("Invalid Password.");
+
+        return Ok(user);
     }
 }

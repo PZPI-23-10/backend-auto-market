@@ -10,4 +10,6 @@ public class User : BaseEntity
     public string Country { get; set; }
     public string AboutYourself { get; set; }
     public DateTime DateOfBirth { get; set; }
+
+    public bool IsGoogleAuth { get; set; } = false;
 }
