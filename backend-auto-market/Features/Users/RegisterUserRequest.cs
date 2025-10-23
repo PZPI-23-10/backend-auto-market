@@ -2,11 +2,12 @@
 
 public record RegisterUserRequest(
     string Email,
-    string Password,
     string FirstName,
     string LastName,
-    string PhoneNumber,
     string Country,
-    string AboutYourself,
-    DateTime DateOfBirth
+    DateTime DateOfBirth,
+    string? Password = null,
+    string? PhoneNumber = null,
+    string? Address = null,
+    string? AboutYourself = null
     );
