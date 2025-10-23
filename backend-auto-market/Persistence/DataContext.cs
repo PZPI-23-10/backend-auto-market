@@ -31,6 +31,4 @@ public class DataContext(DbContextOptions options) : DbContext(options)
 
         return await base.SaveChangesAsync(cancellationToken);
     }
-
-    public DbSet<User> Users { get; set; }
 }
