@@ -115,6 +115,9 @@ public class AccountController(DataContext dataContext, IConfiguration configura
                 Email = payload.Email,
                 IsGoogleAuth = true
             };
+
+            dataContext.Users.Add(user);
+            await dataContext.SaveChangesAsync();
         }
 
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
