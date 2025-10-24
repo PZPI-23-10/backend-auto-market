@@ -139,7 +139,6 @@ public class Program
 
         var serviceScope = app.Services.CreateScope();
         var dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
-        dataContext.Database.EnsureDeleted();
         dataContext.Database.EnsureCreated();
 
         if (app.Environment.IsDevelopment())

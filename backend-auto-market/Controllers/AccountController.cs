@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using backend_auto_market.Features.Users;
 using backend_auto_market.Persistence;
@@ -37,13 +39,16 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         if (!Regex.IsMatch(request.Password, @"^[a-zA-Z0-9!@#$%^&*]+$"))
             return BadRequest("Password can only contain letters, numbers, and special characters.");
 
+        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
+        byte[] hashBytes = MD5.HashData(inputBytes);
+
         var user = new User
         {
             FirstName = request.FirstName,
             LastName = request.LastName,
             Country = request.Country,
             Email = request.Email,
-            Password = request.Password,
+            Password = Convert.ToBase64String(hashBytes),
             PhoneNumber = request.PhoneNumber,
             DateOfBirth = request.DateOfBirth,
             AboutYourself = request.AboutYourself,
@@ -70,7 +75,11 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         if (user.IsGoogleAuth)
             return BadRequest("This user is registered with Google authentication. Please use Google login.");
 
-        if (user.Password != request.Password)
+        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
+        byte[] hashBytes = MD5.HashData(inputBytes);
+        string hashedPassword = Convert.ToBase64String(hashBytes);
+
+        if (user.Password != hashedPassword)
             return Unauthorized("Invalid Password.");
 
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
