@@ -105,30 +105,30 @@ public class Program
         });
 
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("AllowSwagger", policy =>
-            {
-                policy.WithOrigins("http://localhost:5291")
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
-            });
-
-            var allowedOrigins = new[]
-            {
-                "http://localhost:56082",
-                "https://your-production-client.com"
-            };
-
-            options.AddPolicy("CorsPolicy", builder =>
-            {
-                builder
-                    .WithOrigins(allowedOrigins)
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
-            });
-        });
+        // builder.Services.AddCors(options =>
+        // {
+        //     options.AddPolicy("AllowSwagger", policy =>
+        //     {
+        //         policy.WithOrigins("http://localhost:5291")
+        //             .AllowAnyHeader()
+        //             .AllowAnyMethod();
+        //     });
+        //
+        //     var allowedOrigins = new[]
+        //     {
+        //         "http://localhost:5291",
+        //         "https://your-production-client.com"
+        //     };
+        //
+        //     options.AddPolicy("CorsPolicy", builder =>
+        //     {
+        //         builder
+        //             .WithOrigins(allowedOrigins)
+        //             .AllowAnyHeader()
+        //             .AllowAnyMethod()
+        //             .AllowCredentials();
+        //     });
+        // });
 
         builder.Services.ConfigureDatabase(builder.Configuration);
         builder.Services.AddAuthorization();
@@ -139,6 +139,7 @@ public class Program
 
         var serviceScope = app.Services.CreateScope();
         var dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+        dataContext.Database.EnsureDeleted();
         dataContext.Database.EnsureCreated();
 
         if (app.Environment.IsDevelopment())
@@ -146,9 +147,9 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-
+        
         app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-
+        
         app.UseCors("AllowSwagger");
         app.UseCors("AllowSpecificOrigins");
 

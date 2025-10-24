@@ -18,7 +18,7 @@ public class AccountController(DataContext dataContext, IConfiguration configura
     : ControllerBase
 {
     [HttpPost]
-    [Route("RegisterUser")]
+    [Route("register")]
     public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
     {
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password) ||
@@ -57,7 +57,7 @@ public class AccountController(DataContext dataContext, IConfiguration configura
     }
 
     [HttpPost]
-    [Route("LoginUser")]
+    [Route("login")]
     public async Task<IActionResult> LoginUser([FromBody] LoginUserRequest request)
     {
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
@@ -140,7 +140,7 @@ public class AccountController(DataContext dataContext, IConfiguration configura
 
 
     [HttpPost]
-    [Route("Edit")]
+    [Route("edit")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> Edit([FromBody] EditUserRequest request)
     {
