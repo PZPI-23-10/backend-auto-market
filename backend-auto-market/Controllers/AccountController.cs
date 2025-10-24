@@ -77,8 +77,31 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         return Ok(new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey));
     }
 
-    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request,
-        GoogleJsonWebSignature.Payload payload)
+    [HttpPost("android/google")]
+    public async Task<IActionResult> GoogleAndroidLogin([FromBody] GoogleLoginRequest request)
+    {
+        var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken,
+            new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = [configuration.GetSection("Google")["AndroidClientId"]]
+            });
+
+        return await GoogleLogin(request, payload);
+    }
+
+    [HttpPost("web/google")]
+    public async Task<IActionResult> GoogleWebLogin([FromBody] GoogleLoginRequest request)
+    {
+        var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken,
+            new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = [configuration.GetSection("Google")["WebClientId"]]
+            });
+
+        return await GoogleLogin(request, payload);
+    }
+
+    private async Task<IActionResult> GoogleLogin(GoogleLoginRequest request, GoogleJsonWebSignature.Payload payload)
     {
         var user = await dataContext.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
 
@@ -103,12 +126,12 @@ public class AccountController(DataContext dataContext, IConfiguration configura
     {
         if (userId < 0)
             return BadRequest("UserId must be greater than zero.");
-        
+
         var user = await dataContext.Users.FindAsync(userId);
-        
+
         if (user == null)
             return NotFound();
-        
+
         return Ok(user);
     }
 
@@ -119,18 +142,18 @@ public class AccountController(DataContext dataContext, IConfiguration configura
     public async Task<IActionResult> Edit([FromBody] EditUserRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
+
         if (string.IsNullOrEmpty(userIdClaim))
             return BadRequest("User ID not found.");
-        
+
         if (!int.TryParse(userIdClaim, out var userId))
             return BadRequest("User ID is not an integer.");
-        
+
         var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
-        
-        if(user == null)
+
+        if (user == null)
             return NotFound();
-        
+
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
         user.Country = request.Country;
@@ -139,9 +162,8 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         user.DateOfBirth = request.DateOfBirth;
         user.UrlPhoto = request.UrlPhoto;
         user.PhoneNumber = request.PhoneNumber;
-        
+
         await dataContext.SaveChangesAsync();
         return Ok();
     }
-    
 }
