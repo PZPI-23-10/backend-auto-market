@@ -50,7 +50,7 @@ public class AccountController(DataContext dataContext, IConfiguration configura
             Email = request.Email,
             Password = Convert.ToBase64String(hashBytes),
             PhoneNumber = request.PhoneNumber,
-            DateOfBirth = request.DateOfBirth,
+            DateOfBirth = request.DateOfBirth.ToUniversalTime(),
             AboutYourself = request.AboutYourself,
             Address = request.Address
         };
