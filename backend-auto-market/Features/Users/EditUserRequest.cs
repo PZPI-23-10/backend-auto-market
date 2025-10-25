@@ -6,7 +6,7 @@ public record EditUserRequest(
     string? LastName = null,
     string? PhoneNumber = null,
     DateTime? DateOfBirth = null,
-    string? UrlPhoto = null,
+    IFormFile? Photo = null,
     string? Address = null,
     string? Country = null,
     string? AboutYourself = null);

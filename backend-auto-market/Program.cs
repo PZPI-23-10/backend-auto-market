@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using backend_auto_market.Extensions;
 using backend_auto_market.Persistence;
 using backend_auto_market.Services;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -130,10 +131,21 @@ public class Program
         //     });
         // });
 
+        Account account = new Account(
+            builder.Configuration["CloudinarySettings:CloudName"],
+            builder.Configuration["CloudinarySettings:ApiKey"],
+            builder.Configuration["CloudinarySettings:ApiSecret"]
+        );
+
+        Cloudinary cloudinary = new Cloudinary(account);
+
         builder.Services.ConfigureDatabase(builder.Configuration);
-        builder.Services.AddAuthorization();
-        builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-        builder.Services.AddScoped<TokenService>();
+
+        builder.Services
+            .AddAuthorization()
+            .AddSingleton<IConfiguration>(builder.Configuration)
+            .AddScoped<TokenService>()
+            .AddSingleton(cloudinary);
 
         var app = builder.Build();
 
@@ -146,9 +158,9 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        
+
         app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-        
+
         app.UseCors("AllowSwagger");
         app.UseCors("AllowSpecificOrigins");
 

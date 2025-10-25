@@ -6,6 +6,8 @@ using backend_auto_market.Features.Users;
 using backend_auto_market.Persistence;
 using backend_auto_market.Persistence.Models;
 using backend_auto_market.Services;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +18,11 @@ namespace backend_auto_market.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(DataContext dataContext, IConfiguration configuration, TokenService tokenService)
+public class AccountController(
+    DataContext dataContext,
+    IConfiguration configuration,
+    TokenService tokenService,
+    Cloudinary cloudinary)
     : ControllerBase
 {
     [HttpPost]
@@ -148,10 +154,10 @@ public class AccountController(DataContext dataContext, IConfiguration configura
     }
 
 
-    [HttpPost]
+    [HttpPut]
     [Route("edit")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> Edit([FromBody] EditUserRequest request)
+    public async Task<IActionResult> Edit([FromForm] EditUserRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -169,11 +175,31 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         user.FirstName = request.FirstName ?? user.FirstName;
         user.LastName = request.LastName ?? user.LastName;
         user.Country = request.Country ?? user.Country;
-        user.AboutYourself = request.AboutYourself;
-        user.Address = request.Address;
-        user.DateOfBirth = request.DateOfBirth.GetValueOrDefault();
-        user.UrlPhoto = request.UrlPhoto;
-        user.PhoneNumber = request.PhoneNumber;
+        user.AboutYourself = request.AboutYourself ?? user.AboutYourself;
+        user.Address = request.Address ?? user.Address;
+        user.DateOfBirth = request.DateOfBirth ?? user.DateOfBirth;
+        user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
+
+        if (request.Photo is { Length: > 0 })
+        {
+            await using var stream = request.Photo.OpenReadStream();
+            var uploadParams = new ImageUploadParams()
+            {
+                File = new FileDescription(request.Photo.FileName, stream),
+
+                PublicId = $"avatars/{userId}/{Guid.NewGuid()}",
+
+                Transformation = new Transformation()
+                    .Width(500).Height(500).Crop("fill").Gravity("face")
+            };
+
+            ImageUploadResult? uploadResult = await cloudinary.UploadAsync(uploadParams);
+
+            if (uploadResult.Error == null)
+            {
+                user.UrlPhoto = uploadResult.SecureUrl.ToString();
+            }
+        }
 
         await dataContext.SaveChangesAsync();
         return Ok();
