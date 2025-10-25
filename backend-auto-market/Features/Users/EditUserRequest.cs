@@ -1,12 +1,12 @@
 ﻿namespace backend_auto_market.Features.Users;
 
 public record EditUserRequest(
-    string Password,
-    string FirstName,
-    string LastName,
-    string PhoneNumber,
-    DateTime DateOfBirth,
-    string UrlPhoto,
-    string Address,
-    string Country,
-    string AboutYourself);
+    string? Password = null,
+    string? FirstName = null,
+    string? LastName = null,
+    string? PhoneNumber = null,
+    DateTime? DateOfBirth = null,
+    string? UrlPhoto = null,
+    string? Address = null,
+    string? Country = null,
+    string? AboutYourself = null);
