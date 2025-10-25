@@ -166,12 +166,12 @@ public class AccountController(DataContext dataContext, IConfiguration configura
         if (user == null)
             return NotFound();
 
-        user.FirstName = request.FirstName;
-        user.LastName = request.LastName;
-        user.Country = request.Country;
+        user.FirstName = request.FirstName ?? user.FirstName;
+        user.LastName = request.LastName ?? user.LastName;
+        user.Country = request.Country ?? user.Country;
         user.AboutYourself = request.AboutYourself;
         user.Address = request.Address;
-        user.DateOfBirth = request.DateOfBirth;
+        user.DateOfBirth = request.DateOfBirth.GetValueOrDefault();
         user.UrlPhoto = request.UrlPhoto;
         user.PhoneNumber = request.PhoneNumber;
 
