@@ -116,6 +116,10 @@ public class AccountController(
         return await GoogleLogin(request, payload);
     }
 
+    [HttpGet("emailExists")]
+    public async Task<IActionResult> IsEmailExists([FromQuery] string email) =>
+        Ok(await dataContext.Users.AnyAsync(u => u.Email == email));
+
     private async Task<IActionResult> GoogleLogin(GoogleLoginRequest request, GoogleJsonWebSignature.Payload payload)
     {
         var user = await dataContext.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
@@ -138,6 +142,7 @@ public class AccountController(
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
         return Ok(new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey));
     }
+
 
     [HttpGet]
     public async Task<IActionResult> UserProfile([FromQuery] int userId)
