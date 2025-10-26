@@ -154,6 +154,63 @@ public class AccountController(
 
         if (user == null)
             return NotFound();
+        
+        return Ok(user);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> ChangePassword([FromQuery] int userId, [FromBody] ChangePasswordRequest request)
+    {
+        if (userId < 0)
+            return BadRequest("UserId must be greater than zero.");
+
+        var user = await dataContext.Users.FindAsync(userId);
+
+        if (user == null)
+            return NotFound();
+        
+        if(string.IsNullOrEmpty(request.NewPassword)|| string.IsNullOrEmpty(request.Password) || 
+           string.IsNullOrEmpty(request.PasswordConfirmation))
+            return BadRequest("All fields are required.");
+        
+        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
+        byte[] hashBytes = MD5.HashData(inputBytes);
+        string OldhashedPassword = Convert.ToBase64String(hashBytes);
+        
+        if (user.Password != OldhashedPassword)
+            return BadRequest("Old password is incorrect.");
+        
+        if (request.NewPassword.Length is < 5 or > 27)
+            return BadRequest("Password must be between 5 and 20 characters.");
+
+        if (!Regex.IsMatch(request.NewPassword, @"^[a-zA-Z0-9!@#$%^&*]+$"))
+            return BadRequest("Password can only contain letters, numbers, and special characters.");
+        
+        if (request.NewPassword != request.PasswordConfirmation)
+            return BadRequest("New password and confirmation do not match.");
+        
+        byte[] newPassBytes = Encoding.UTF8.GetBytes(request.NewPassword);
+        byte[] newHashBytes = MD5.HashData(newPassBytes);
+        string newHashedPassword = Convert.ToBase64String(newHashBytes);
+        
+        user.Password = newHashedPassword;
+        
+        dataContext.Users.Update(user);
+        await dataContext.SaveChangesAsync();
+        
+        return Ok();
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> IsExists([FromQuery] int userId)
+    {
+        if (userId < 0)
+            return BadRequest("UserId must be greater than zero.");
+
+        var user = await dataContext.Users.FindAsync(userId);
+
+        if (user == null)
+            return NotFound();
 
         return Ok(user);
     }
