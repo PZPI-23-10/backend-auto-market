@@ -159,12 +159,19 @@ public class AccountController(
     }
     
     [HttpPost]
-    public async Task<IActionResult> ChangePassword([FromQuery] int userId, [FromBody] ChangePasswordRequest request)
+    [Route("ChangePassword")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        if (userId < 0)
-            return BadRequest("UserId must be greater than zero.");
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        var user = await dataContext.Users.FindAsync(userId);
+        if (string.IsNullOrEmpty(userIdClaim))
+            return BadRequest("User ID not found.");
+
+        if (!int.TryParse(userIdClaim, out var userId))
+            return BadRequest("User ID is not an integer.");
+
+        var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
             return NotFound();
@@ -199,20 +206,6 @@ public class AccountController(
         await dataContext.SaveChangesAsync();
         
         return Ok();
-    }
-    
-    [HttpPost]
-    public async Task<IActionResult> IsExists([FromQuery] int userId)
-    {
-        if (userId < 0)
-            return BadRequest("UserId must be greater than zero.");
-
-        var user = await dataContext.Users.FindAsync(userId);
-
-        if (user == null)
-            return NotFound();
-
-        return Ok(user);
     }
 
 
