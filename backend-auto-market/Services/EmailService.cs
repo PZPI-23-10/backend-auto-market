@@ -16,7 +16,7 @@ public class EmailService
     private readonly string _smtpServer;
     private readonly int _smtpPort;
     private readonly bool _enableSsl;
-    
+
     public EmailService(IConfiguration configuration, DataContext context)
     {
         _configuration = configuration;
@@ -25,81 +25,6 @@ public class EmailService
 
     private string GenerateCode() => new Random().Next(100000, 999999).ToString();
 
-    public async Task<string> CreateAndSendVerificationCodeAsync(
-        string email,
-        VerificationType type,
-        string? firstName = null)
-    {
-        string code = GenerateCode();
-
-        var verification = new EmailVerificationCode
-        {
-            Email = email,
-            Code = code,
-            ExpirationTime = DateTime.UtcNow.AddMinutes(15),
-            Type = type
-        };
-
-        _context.EmailVerificationCodes.Add(verification);
-        await _context.SaveChangesAsync();
-        
-        string subject;
-        string body;
-
-        switch (type)
-        {
-            case VerificationType.Register:
-                subject = "Підтвердження реєстрації на AutoMarket";
-                body = $"""
-                            <h2>Вітаю, {firstName ?? "користувачу"}!</h2>
-                            <p>Ваш код для підтвердження реєстрації:</p>
-                            <h1 style="color:#007bff;">{code}</h1>
-                            <p>Код дійсний 15 хвилин.</p>
-                        """;
-                break;
-
-            case VerificationType.PasswordReset:
-                subject = "Відновлення паролю — AutoMarket";
-                body = $"""
-                            <h3>Ваш код для відновлення паролю:</h3>
-                            <h1 style="color:#007bff;">{code}</h1>
-                            <p>Код дійсний 15 хвилин.</p>
-                        """;
-                break;
-
-            case VerificationType.PasswordChange:
-                subject = "Підтвердження зміни паролю — AutoMarket";
-                body = $"""
-                            <h3>Ваш код для підтвердження зміни паролю:</h3>
-                            <h1 style="color:#007bff;">{code}</h1>
-                            <p>Код дійсний 15 хвилин.</p>
-                        """;
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
-        }
-        
-        await SendEmailAsync(email, subject, body);
-        return code;
-    }
-    
-    public async Task<bool> VerifyCodeAsync(string email, string code, VerificationType type)
-    {
-        var record = await _context.EmailVerificationCodes
-            .Where(v => v.Email == email && v.Code == code && v.Type == type)
-            .OrderByDescending(v => v.ExpirationTime)
-            .FirstOrDefaultAsync();
-
-        if (record == null || record.ExpirationTime < DateTime.UtcNow)
-            return false;
-        
-        _context.EmailVerificationCodes.Remove(record);
-        await _context.SaveChangesAsync();
-
-        return true;
-    }
-    
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
         using var client = new SmtpClient(_smtpServer, _smtpPort)
@@ -119,7 +44,7 @@ public class EmailService
         mailMessage.To.Add(toEmail);
         await client.SendMailAsync(mailMessage);
     }
-    
+
     public async Task SendRegistrationEmail(string toEmail, string firstName, string code)
     {
         string subject = "Підтвердження реєстрації — AutoMarket";

@@ -7,6 +7,7 @@ public class DataContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
     public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
+
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         DateTime now = DateTime.UtcNow;
@@ -31,5 +32,15 @@ public class DataContext(DbContextOptions options) : DbContext(options)
         }
 
         return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<User>()
+            .HasMany(user => user.EmailVerificationCodes)
+            .WithOne(emailVerificationCode => emailVerificationCode.User)
+            .HasForeignKey(emailVerificationCode => emailVerificationCode.UserId);
     }
 }

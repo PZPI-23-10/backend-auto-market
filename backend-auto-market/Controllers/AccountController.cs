@@ -48,8 +48,8 @@ public class AccountController(
 
         byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
         byte[] hashBytes = MD5.HashData(inputBytes);
-        
-        var verificationCode = new Random().Next(100000, 999999).ToString();
+
+        string randomVerificationCode = new Random().Next(100000, 999999).ToString();
 
         var user = new User
         {
@@ -63,16 +63,23 @@ public class AccountController(
             AboutYourself = request.AboutYourself,
             Address = request.Address,
             IsVerified = false,
-            VerificationCode = verificationCode,
-            VerificationCodeExpiresAt = DateTime.UtcNow.AddMinutes(15)
         };
 
-        
+        EmailVerificationCode verificationCode = new EmailVerificationCode
+        {
+            Code = randomVerificationCode,
+            ExpirationTime = DateTime.UtcNow.AddMinutes(15),
+            Type = VerificationType.Register,
+            UserId = user.Id
+        };
+
         await dataContext.Users.AddAsync(user);
+        await dataContext.EmailVerificationCodes.AddAsync(verificationCode);
+
         await dataContext.SaveChangesAsync();
 
-        await emailService.SendRegistrationEmail(user.Email, user.FirstName, verificationCode);
-        
+        await emailService.SendRegistrationEmail(user.Email, user.FirstName, randomVerificationCode);
+
         return Ok();
     }
 
@@ -93,19 +100,27 @@ public class AccountController(
 
         if (user == null)
             return NotFound();
-        
+
         if (user.IsVerified)
             return BadRequest("Email already verified.");
 
-        if (user.VerificationCode != request.Code)
+        EmailVerificationCode? verificationCode =
+            dataContext.EmailVerificationCodes.FirstOrDefault(x => x.UserId == userId);
+
+        if (verificationCode == null)
+            return BadRequest("Email verification code not found.");
+
+        if (verificationCode.Code != request.Code)
             return BadRequest("Invalid verification code.");
 
-        if (user.VerificationCodeExpiresAt < DateTime.UtcNow)
+        if (verificationCode.ExpirationTime < DateTime.UtcNow)
             return BadRequest("Verification code has expired.");
-        
+
         user.IsVerified = true;
-        user.VerificationCode = null;
-        user.VerificationCodeExpiresAt = null;
+
+        dataContext.Users.Update(user);
+        dataContext.EmailVerificationCodes.Remove(verificationCode);
+
         await dataContext.SaveChangesAsync();
 
         return Ok();
@@ -198,10 +213,10 @@ public class AccountController(
 
         if (user == null)
             return NotFound();
-        
+
         return Ok(user);
     }
-    
+
     [HttpPost]
     [Route("ChangePassword")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -219,36 +234,36 @@ public class AccountController(
 
         if (user == null)
             return NotFound();
-        
-        if(string.IsNullOrEmpty(request.NewPassword)|| string.IsNullOrEmpty(request.Password) || 
-           string.IsNullOrEmpty(request.PasswordConfirmation))
+
+        if (string.IsNullOrEmpty(request.NewPassword) || string.IsNullOrEmpty(request.Password) ||
+            string.IsNullOrEmpty(request.PasswordConfirmation))
             return BadRequest("All fields are required.");
-        
+
         byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
         byte[] hashBytes = MD5.HashData(inputBytes);
         string OldhashedPassword = Convert.ToBase64String(hashBytes);
-        
+
         if (user.Password != OldhashedPassword)
             return BadRequest("Old password is incorrect.");
-        
+
         if (request.NewPassword.Length is < 5 or > 27)
             return BadRequest("Password must be between 5 and 20 characters.");
 
         if (!Regex.IsMatch(request.NewPassword, @"^[a-zA-Z0-9!@#$%^&*]+$"))
             return BadRequest("Password can only contain letters, numbers, and special characters.");
-        
+
         if (request.NewPassword != request.PasswordConfirmation)
             return BadRequest("New password and confirmation do not match.");
-        
+
         byte[] newPassBytes = Encoding.UTF8.GetBytes(request.NewPassword);
         byte[] newHashBytes = MD5.HashData(newPassBytes);
         string newHashedPassword = Convert.ToBase64String(newHashBytes);
-        
+
         user.Password = newHashedPassword;
-        
+
         dataContext.Users.Update(user);
         await dataContext.SaveChangesAsync();
-        
+
         return Ok();
     }
 
