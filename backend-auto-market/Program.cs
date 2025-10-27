@@ -131,7 +131,6 @@ public class Program
         //             .AllowCredentials();
         //     });
         // });
-
         Account account = new Account(
             builder.Configuration["CloudinarySettings:CloudName"],
             builder.Configuration["CloudinarySettings:ApiKey"],
@@ -146,6 +145,7 @@ public class Program
             .AddAuthorization()
             .AddSingleton<IConfiguration>(builder.Configuration)
             .Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"))
+            .Configure<SendGridSettings>(builder.Configuration.GetSection("SendGridSettings"))
             .AddScoped<TokenService>()
             .AddScoped<EmailService>()
             .AddSingleton(cloudinary);
