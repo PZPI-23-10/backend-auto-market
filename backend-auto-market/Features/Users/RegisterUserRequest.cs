@@ -1,7 +1,9 @@
-﻿namespace backend_auto_market.Features.Users;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace backend_auto_market.Features.Users;
 
 public record RegisterUserRequest(
-    string Email,
+    [EmailAddress] string Email,
     string FirstName,
     string LastName,
     string Country,
@@ -10,4 +12,4 @@ public record RegisterUserRequest(
     string? PhoneNumber = null,
     string? Address = null,
     string? AboutYourself = null
-    );
+);
