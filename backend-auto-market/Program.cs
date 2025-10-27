@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using backend_auto_market.Configs;
 using backend_auto_market.Extensions;
 using backend_auto_market.Persistence;
 using backend_auto_market.Services;
@@ -16,7 +17,11 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Services.Configure<EmailSettings>(
+            builder.Configuration.GetSection("EmailSettings"));
         builder.Services.AddScoped<EmailService>();
+
+        
         builder.Services.AddAuthentication(cfg =>
         {
             cfg.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

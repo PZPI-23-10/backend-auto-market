@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Mail;
+using backend_auto_market.Configs;
 using backend_auto_market.Persistence;
 using backend_auto_market.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,16 +9,10 @@ namespace backend_auto_market.Services;
 
 public class EmailService
 {
-    private readonly IConfiguration _configuration;
+    private readonly EmailSettings _configuration;
     private readonly DataContext _context;
-    private readonly string _fromEmail;
-    private readonly string _fromName;
-    private readonly string _password;
-    private readonly string _smtpServer;
-    private readonly int _smtpPort;
-    private readonly bool _enableSsl;
 
-    public EmailService(IConfiguration configuration, DataContext context)
+    public EmailService(EmailSettings configuration, DataContext context)
     {
         _configuration = configuration;
         _context = context;
@@ -27,15 +22,15 @@ public class EmailService
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
-        using var client = new SmtpClient(_smtpServer, _smtpPort)
+        using var client = new SmtpClient(_configuration.SmtpServer, _configuration.Port)
         {
-            Credentials = new NetworkCredential(_fromEmail, _password),
-            EnableSsl = _enableSsl
+            Credentials = new NetworkCredential(_configuration.FromEmail, _configuration.Password),
+            EnableSsl = true
         };
 
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(_fromEmail, _fromName),
+            From = new MailAddress(_configuration.FromEmail, _configuration.FromName),
             Subject = subject,
             Body = body,
             IsBodyHtml = true
