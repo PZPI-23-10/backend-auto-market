@@ -13,11 +13,9 @@ public class EmailService(IOptions<EmailSettings> options)
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
-        using var client = new SmtpClient(Configuration.SmtpServer, Configuration.Port)
-        {
-            Credentials = new NetworkCredential(Configuration.FromEmail, Configuration.Password),
-            EnableSsl = true
-        };
+        using var client = new SmtpClient(Configuration.SmtpServer, Configuration.Port);
+        client.Credentials = new NetworkCredential(Configuration.FromEmail, Configuration.Password);
+        client.EnableSsl = true;
 
         var mailMessage = new MailMessage
         {
