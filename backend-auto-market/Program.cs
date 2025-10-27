@@ -17,11 +17,6 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.Configure<EmailSettings>(
-            builder.Configuration.GetSection("EmailSettings"));
-        builder.Services.AddScoped<EmailService>();
-
-        
         builder.Services.AddAuthentication(cfg =>
         {
             cfg.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -150,7 +145,9 @@ public class Program
         builder.Services
             .AddAuthorization()
             .AddSingleton<IConfiguration>(builder.Configuration)
+            .Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"))
             .AddScoped<TokenService>()
+            .AddScoped<EmailService>()
             .AddSingleton(cloudinary);
 
         var app = builder.Build();

@@ -1,36 +1,27 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using backend_auto_market.Configs;
-using backend_auto_market.Persistence;
-using backend_auto_market.Persistence.Models;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace backend_auto_market.Services;
 
-public class EmailService
+public class EmailService(IOptions<EmailSettings> options)
 {
-    private readonly EmailSettings _configuration;
-    private readonly DataContext _context;
-
-    public EmailService(EmailSettings configuration, DataContext context)
-    {
-        _configuration = configuration;
-        _context = context;
-    }
+    private EmailSettings Configuration => options.Value;
 
     private string GenerateCode() => new Random().Next(100000, 999999).ToString();
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
-        using var client = new SmtpClient(_configuration.SmtpServer, _configuration.Port)
+        using var client = new SmtpClient(Configuration.SmtpServer, Configuration.Port)
         {
-            Credentials = new NetworkCredential(_configuration.FromEmail, _configuration.Password),
+            Credentials = new NetworkCredential(Configuration.FromEmail, Configuration.Password),
             EnableSsl = true
         };
 
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(_configuration.FromEmail, _configuration.FromName),
+            From = new MailAddress(Configuration.FromEmail, Configuration.FromName),
             Subject = subject,
             Body = body,
             IsBodyHtml = true
