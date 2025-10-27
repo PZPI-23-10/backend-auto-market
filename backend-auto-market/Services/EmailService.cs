@@ -8,9 +8,6 @@ namespace backend_auto_market.Services;
 public class EmailService(IOptions<EmailSettings> options)
 {
     private EmailSettings Configuration => options.Value;
-
-    private string GenerateCode() => new Random().Next(100000, 999999).ToString();
-
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
         using var client = new SmtpClient(Configuration.SmtpServer, Configuration.Port);

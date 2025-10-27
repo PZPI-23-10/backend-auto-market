@@ -78,7 +78,8 @@ public class AccountController(
 
         await emailService.SendRegistrationEmail(user.Email, user.FirstName, randomVerificationCode);
 
-        return Ok();
+        var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, false);
+        return Ok(new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey));
     }
 
     [HttpPost]
