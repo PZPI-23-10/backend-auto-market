@@ -70,12 +70,10 @@ public class AccountController(
             Code = randomVerificationCode,
             ExpirationTime = DateTime.UtcNow.AddMinutes(15),
             Type = VerificationType.Register,
-            UserId = user.Id
+            User = user
         };
 
-        await dataContext.Users.AddAsync(user);
         await dataContext.EmailVerificationCodes.AddAsync(verificationCode);
-
         await dataContext.SaveChangesAsync();
 
         await emailService.SendRegistrationEmail(user.Email, user.FirstName, randomVerificationCode);
