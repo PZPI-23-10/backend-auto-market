@@ -22,7 +22,8 @@ public class AccountController(
     DataContext dataContext,
     IConfiguration configuration,
     TokenService tokenService,
-    Cloudinary cloudinary)
+    Cloudinary cloudinary,
+    EmailService emailService)
     : ControllerBase
 {
     [HttpPost]
@@ -47,6 +48,8 @@ public class AccountController(
 
         byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
         byte[] hashBytes = MD5.HashData(inputBytes);
+        
+        var verificationCode = new Random().Next(100000, 999999).ToString();
 
         var user = new User
         {
@@ -58,10 +61,51 @@ public class AccountController(
             PhoneNumber = request.PhoneNumber,
             DateOfBirth = request.DateOfBirth.ToUniversalTime(),
             AboutYourself = request.AboutYourself,
-            Address = request.Address
+            Address = request.Address,
+            IsVerified = false,
+            VerificationCode = verificationCode,
+            VerificationCodeExpiresAt = DateTime.UtcNow.AddMinutes(15)
         };
 
+        
         await dataContext.Users.AddAsync(user);
+        await dataContext.SaveChangesAsync();
+
+        await emailService.SendRegistrationEmail(user.Email, user.FirstName, verificationCode);
+        
+        return Ok();
+    }
+
+    [HttpPost]
+    [Route("verify-email")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim))
+            return BadRequest("User ID not found.");
+
+        if (!int.TryParse(userIdClaim, out var userId))
+            return BadRequest("User ID is not an integer.");
+
+        var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return NotFound();
+        
+        if (user.IsVerified)
+            return BadRequest("Email already verified.");
+
+        if (user.VerificationCode != request.Code)
+            return BadRequest("Invalid verification code.");
+
+        if (user.VerificationCodeExpiresAt < DateTime.UtcNow)
+            return BadRequest("Verification code has expired.");
+        
+        user.IsVerified = true;
+        user.VerificationCode = null;
+        user.VerificationCodeExpiresAt = null;
         await dataContext.SaveChangesAsync();
 
         return Ok();

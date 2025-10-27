@@ -16,6 +16,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Services.AddScoped<EmailService>();
         builder.Services.AddAuthentication(cfg =>
         {
             cfg.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

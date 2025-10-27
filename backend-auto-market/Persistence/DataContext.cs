@@ -6,6 +6,7 @@ namespace backend_auto_market.Persistence;
 public class DataContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         DateTime now = DateTime.UtcNow;

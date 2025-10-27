@@ -13,4 +13,11 @@ public class User : BaseAuditableEntity
     public string? UrlPhoto { get; set; }
     public string? Address { get; set; }
     public bool IsGoogleAuth { get; set; } = false;
+    
+    public bool IsVerified { get; set; } = false;
+    public string? VerificationCode { get; set; }
+    public DateTime? VerificationCodeExpiresAt { get; set; }
+
+    public string? RecoveryCode { get; set; }
+    public DateTime? RecoveryCodeExpiresAt { get; set; }
 }
