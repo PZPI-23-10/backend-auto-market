@@ -363,7 +363,7 @@ public class AccountController(
     
     
     [HttpPost]
-    [Route("ChangePassword")]
+    [Route("PasswordReset")]
     public async Task<IActionResult> PasswordReset([FromBody] ResetPasswordRequest request)
     {
         var user = await dataContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
