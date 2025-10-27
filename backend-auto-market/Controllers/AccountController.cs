@@ -317,12 +317,4 @@ public class AccountController(
         await dataContext.SaveChangesAsync();
         return Ok();
     }
-    
-    
-    [HttpGet("test-email")]
-    public async Task<IActionResult> TestEmail([FromServices] EmailService emailService)
-    {
-        await emailService.SendEmailAsync("KiyakoKiyakoS@gmail.com", "Test Email", "<b>Hello from AutoMarket!</b>");
-        return Ok("Email sent!");
-    }
 }

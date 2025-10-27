@@ -1,32 +1,31 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using backend_auto_market.Configs;
-using MailKit.Security;
 using Microsoft.Extensions.Options;
-using MimeKit;
-using MailKit.Net.Smtp;
-using MailKit.Security;
-using Microsoft.Extensions.Options;
-using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace backend_auto_market.Services;
 
 public class EmailService(IOptions<EmailSettings> options)
 {
-    private EmailSettings _settings => options.Value;
+    private EmailSettings Configuration => options.Value;
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
-        var mailMessage = new MimeMessage();
-        mailMessage.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
-        mailMessage.To.Add(MailboxAddress.Parse(toEmail));
-        mailMessage.Subject = subject;
-        mailMessage.Body = new TextPart("html") { Text = body };
+        using var client = new SmtpClient(Configuration.SmtpServer, Configuration.Port);
+        client.UseDefaultCredentials = false;
+        client.DeliveryMethod = SmtpDeliveryMethod.Network;
+        client.Credentials = new NetworkCredential(Configuration.FromEmail, Configuration.Password);
+        client.EnableSsl = true;
 
-        using var client = new SmtpClient();
-        await client.ConnectAsync(_settings.SmtpServer, _settings.Port, SecureSocketOptions.StartTls);
-        await client.AuthenticateAsync(_settings.Username, _settings.Password);
-        await client.SendAsync(mailMessage);
-        await client.DisconnectAsync(true);
+        var mailMessage = new MailMessage
+        {
+            From = new MailAddress(Configuration.FromEmail, Configuration.FromName),
+            Subject = subject,
+            Body = body,
+            IsBodyHtml = true
+        };
+
+        mailMessage.To.Add(toEmail);
+        await client.SendMailAsync(mailMessage);
     }
 
     public async Task SendRegistrationEmail(string toEmail, string firstName, string code)
