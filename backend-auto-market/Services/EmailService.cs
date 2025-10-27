@@ -8,6 +8,7 @@ namespace backend_auto_market.Services;
 public class EmailService(IOptions<EmailSettings> options)
 {
     private EmailSettings Configuration => options.Value;
+
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
         using var client = new SmtpClient(Configuration.SmtpServer, Configuration.Port);
@@ -50,5 +51,15 @@ public class EmailService(IOptions<EmailSettings> options)
                        <p>Термін дії — 15 хвилин.</p>
                        """;
         await SendEmailAsync(toEmail, subject, body);
+    }
+
+    public async Task SendPasswordChangedInfo(string toEmail, string newPassword)
+    {
+        string subject = "Зміна пароля — AutoMarket";
+        string body = $"""
+                       <h3>Пароль змінено</h3>
+                       <p>Новий пароль:</p>
+                       <h2 style="color:#007bff;">{newPassword}</h2>
+                       """;
     }
 }

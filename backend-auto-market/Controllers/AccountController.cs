@@ -12,7 +12,9 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace backend_auto_market.Controllers;
 
@@ -23,7 +25,9 @@ public class AccountController(
     IConfiguration configuration,
     TokenService tokenService,
     Cloudinary cloudinary,
-    EmailService emailService)
+    EmailService emailService,
+    IMemoryCache memoryCache
+)
     : ControllerBase
 {
     [HttpPost]
@@ -236,13 +240,15 @@ public class AccountController(
 
         if (string.IsNullOrEmpty(request.NewPassword) || string.IsNullOrEmpty(request.Password) ||
             string.IsNullOrEmpty(request.PasswordConfirmation))
+        {
             return BadRequest("All fields are required.");
+        }
 
         byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
         byte[] hashBytes = MD5.HashData(inputBytes);
-        string OldhashedPassword = Convert.ToBase64String(hashBytes);
+        string oldHashedPassword = Convert.ToBase64String(hashBytes);
 
-        if (user.Password != OldhashedPassword)
+        if (user.Password != oldHashedPassword)
             return BadRequest("Old password is incorrect.");
 
         if (request.NewPassword.Length is < 5 or > 27)
@@ -254,18 +260,52 @@ public class AccountController(
         if (request.NewPassword != request.PasswordConfirmation)
             return BadRequest("New password and confirmation do not match.");
 
+
         byte[] newPassBytes = Encoding.UTF8.GetBytes(request.NewPassword);
         byte[] newHashBytes = MD5.HashData(newPassBytes);
         string newHashedPassword = Convert.ToBase64String(newHashBytes);
 
-        user.Password = newHashedPassword;
+        var tempKey = Guid.NewGuid().ToString();
+        memoryCache.Set(tempKey, newHashedPassword, TimeSpan.FromMinutes(15));
 
-        dataContext.Users.Update(user);
-        await dataContext.SaveChangesAsync();
+        var token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(tempKey));
+
+        var callbackUrl = Url.Action(
+            nameof(ConfirmPasswordChange), "Account",
+            new { userId = user.Id, token = token },
+            protocol: Request.Scheme);
+
+        await emailService.SendEmailAsync(
+            user.Email,
+            "Підтвердження зміни пароля",
+            $"Для підтвердження зміни пароля перейдіть по посиланню: {callbackUrl}");
 
         return Ok();
     }
 
+    [HttpGet("confirm-password-change")]
+    public async Task<IActionResult> ConfirmPasswordChange([FromQuery] int userId, [FromQuery] string token)
+    {
+        var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return BadRequest("Пользователь не найден.");
+
+        var tempKey = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+
+        if (!memoryCache.TryGetValue(tempKey, out string? newPassword))
+            return BadRequest("Срок действия ссылки истёк или ссылка недействительна.");
+
+        user.Password = newPassword;
+
+        dataContext.Users.Update(user);
+        await dataContext.SaveChangesAsync();
+
+        memoryCache.Remove(tempKey);
+        await emailService.SendEmailAsync(user.Email, "Пароль змінено", "Пароль успішно змінено.");
+
+        return Ok();
+    }
 
     [HttpPut]
     [Route("edit")]

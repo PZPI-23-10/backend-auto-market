@@ -148,7 +148,8 @@ public class Program
             .Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"))
             .AddScoped<TokenService>()
             .AddScoped<EmailService>()
-            .AddSingleton(cloudinary);
+            .AddSingleton(cloudinary)
+            .AddMemoryCache();
 
         var app = builder.Build();
 
