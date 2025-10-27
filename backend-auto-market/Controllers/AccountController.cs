@@ -359,9 +359,8 @@ public class AccountController(
         await dataContext.SaveChangesAsync();
         return Ok();
     }
-    
-    
-    
+
+
     [HttpPost]
     [Route("PasswordReset")]
     public async Task<IActionResult> PasswordReset([FromBody] ResetPasswordRequest request)
@@ -404,30 +403,6 @@ public class AccountController(
             user.Email,
             "Підтвердження зміни пароля",
             $"Для підтвердження зміни пароля перейдіть по посиланню: {callbackUrl}");
-
-        return Ok();
-    }
-
-    [HttpGet("confirm-password-change")]
-    public async Task<IActionResult> ConfirmResetPassword([FromQuery] int userId, [FromQuery] string token)
-    {
-        var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return NotFound();
-
-        var tempKey = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
-
-        if (!memoryCache.TryGetValue(tempKey, out string? newPassword))
-            return BadRequest("Час дії посилання сплинув або посилання недійсне.");
-
-        user.Password = newPassword;
-
-        dataContext.Users.Update(user);
-        await dataContext.SaveChangesAsync();
-
-        memoryCache.Remove(tempKey);
-        await emailService.SendEmailAsync(user.Email, "Пароль змінено", "Пароль успішно змінено.");
 
         return Ok();
     }
