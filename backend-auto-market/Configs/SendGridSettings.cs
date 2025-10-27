@@ -1,5 +1,6 @@
 ﻿namespace backend_auto_market.Configs;
 
+[Serializable]
 public class SendGridSettings
 {
     public string ApiKey { get; set; } = null!;
