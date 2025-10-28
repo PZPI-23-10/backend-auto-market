@@ -87,7 +87,53 @@ public class AccountController(
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, false);
         return Ok(new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey));
     }
+    [HttpPost]
+    [Route("send-verification-email")] 
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)] 
+    public async Task<IActionResult> SendVerificationEmail()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            return BadRequest("User ID not found or invalid.");
 
+        var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+        if (user == null)
+            return NotFound("User not found.");
+
+        if (user.IsVerified)
+            return BadRequest("Email already verified.");
+
+        var existingCode = await dataContext.EmailVerificationCodes
+                                    .FirstOrDefaultAsync(x => x.UserId == userId); 
+        if (existingCode != null)
+        {
+            dataContext.EmailVerificationCodes.Remove(existingCode);
+        }
+
+        string newVerificationCode = new Random().Next(100000, 999999).ToString();
+
+        EmailVerificationCode verificationCodeRecord = new EmailVerificationCode
+        {
+            Code = newVerificationCode,
+            ExpirationTime = DateTime.UtcNow.AddMinutes(15), 
+            Type = VerificationType.Register, 
+            UserId = userId
+        };
+
+        await dataContext.EmailVerificationCodes.AddAsync(verificationCodeRecord);
+        await dataContext.SaveChangesAsync(); 
+
+        try
+        {
+            await emailService.SendRegistrationEmail(user.Email, user.FirstName, newVerificationCode);
+            return Ok("Verification code sent successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending verification email: {ex.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send verification email.");
+        }
+    }
     [HttpPost]
     [Route("verify-email")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -228,15 +274,10 @@ public class AccountController(
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim))
-            return BadRequest("User ID not found.");
-
-        if (!int.TryParse(userIdClaim, out var userId))
-            return BadRequest("User ID is not an integer.");
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            return BadRequest("User ID not found or invalid.");
 
         var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
-
         if (user == null)
             return NotFound();
 
@@ -246,43 +287,35 @@ public class AccountController(
             return BadRequest("All fields are required.");
         }
 
-        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
+        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password); 
         byte[] hashBytes = MD5.HashData(inputBytes);
         string oldHashedPassword = Convert.ToBase64String(hashBytes);
 
-        if (user.Password != oldHashedPassword)
+        if (user.Password != oldHashedPassword) 
+        {
             return BadRequest("Old password is incorrect.");
+        }
+      
+        if (request.NewPassword.Length < 5 || request.NewPassword.Length > 27)
+            return BadRequest("Password must be between 5 and 27 characters.");
 
-        if (request.NewPassword.Length is < 5 or > 27)
-            return BadRequest("Password must be between 5 and 20 characters.");
-
-        if (!Regex.IsMatch(request.NewPassword, @"^[a-zA-Z0-9!@#$%^&*]+$"))
+        if (!Regex.IsMatch(request.NewPassword, @"^[a-zA-Z0-9!@#$%^&*()_+=\-{}\[\]:;""'<>,.?/~`|\\]+$"))
             return BadRequest("Password can only contain letters, numbers, and special characters.");
 
         if (request.NewPassword != request.PasswordConfirmation)
             return BadRequest("New password and confirmation do not match.");
+   
 
-
-        byte[] newPassBytes = Encoding.UTF8.GetBytes(request.NewPassword);
+        byte[] newPassBytes = Encoding.UTF8.GetBytes(request.NewPassword); 
         byte[] newHashBytes = MD5.HashData(newPassBytes);
-        string newHashedPassword = Convert.ToBase64String(newHashBytes);
+        string newHashedPassword = Convert.ToBase64String(newHashBytes); 
 
-        var tempKey = Guid.NewGuid().ToString();
-        memoryCache.Set(tempKey, newHashedPassword, TimeSpan.FromMinutes(15));
+        user.Password = newHashedPassword; 
 
-        var token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(tempKey));
+        dataContext.Users.Update(user);
+        await dataContext.SaveChangesAsync(); 
 
-        var callbackUrl = Url.Action(
-            nameof(ConfirmPasswordChange), "Account",
-            new { userId = user.Id, token = token },
-            protocol: Request.Scheme);
-
-        await emailService.SendEmailAsync(
-            user.Email,
-            "Підтвердження зміни пароля",
-            $"Для підтвердження зміни пароля перейдіть по посиланню: {callbackUrl}");
-
-        return Ok();
+        return Ok(); 
     }
 
     [HttpGet("confirm-password-change")]
