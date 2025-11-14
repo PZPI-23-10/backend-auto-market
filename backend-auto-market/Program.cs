@@ -125,6 +125,7 @@ public class Program
             .AddScoped<EmailService>()
             .AddSingleton(cloudinary)
             .AddScoped<IPasswordHasher, PasswordHasher>()
+            .AddScoped<IFileStorage, CloudinaryFileStorage>()
             .AddMemoryCache();
 
         var app = builder.Build();

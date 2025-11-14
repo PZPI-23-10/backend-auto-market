@@ -1,11 +1,5 @@
 ﻿namespace backend_auto_market.Services;
 
-public interface IPasswordHasher
-{
-    string Hash(string password);
-    bool Verify(string password, string hashedPassword);
-}
-
 public class PasswordHasher : IPasswordHasher
 {
     public string Hash(string password)

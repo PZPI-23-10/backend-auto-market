@@ -5,8 +5,6 @@ using backend_auto_market.Features.Users;
 using backend_auto_market.Persistence;
 using backend_auto_market.Persistence.Models;
 using backend_auto_market.Services;
-using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -24,7 +22,7 @@ public class AccountController(
     DataContext dataContext,
     IConfiguration configuration,
     TokenService tokenService,
-    Cloudinary cloudinary,
+    IFileStorage fileStorage,
     EmailService emailService,
     IMemoryCache memoryCache,
     IPasswordHasher passwordHasher
@@ -355,28 +353,12 @@ public class AccountController(
         if (request.Photo is { Length: > 0 })
         {
             await using var stream = request.Photo.OpenReadStream();
-            var uploadParams = new ImageUploadParams()
-            {
-                File = new FileDescription(request.Photo.FileName, stream),
-
-                PublicId = $"avatars/{userId}/{Guid.NewGuid()}",
-
-                Transformation = new Transformation()
-                    .Width(500).Height(500).Crop("fill").Gravity("face")
-            };
-
-            ImageUploadResult? uploadResult = await cloudinary.UploadAsync(uploadParams);
-
-            if (uploadResult.Error == null)
-            {
-                user.UrlPhoto = uploadResult.SecureUrl.ToString();
-            }
+            user.UrlPhoto = await fileStorage.UploadAvatar(stream, request.Photo.FileName, userId);
         }
 
         await dataContext.SaveChangesAsync();
         return Ok();
     }
-
 
     [HttpPost]
     [Route("PasswordReset")]
