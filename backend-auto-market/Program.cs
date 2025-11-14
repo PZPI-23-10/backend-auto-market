@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using backend_auto_market.Configs;
 using backend_auto_market.Extensions;
 using backend_auto_market.Persistence;
+using backend_auto_market.Persistence.Repositories;
 using backend_auto_market.Services;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -126,6 +127,8 @@ public class Program
             .AddSingleton(cloudinary)
             .AddScoped<IPasswordHasher, PasswordHasher>()
             .AddScoped<IFileStorage, CloudinaryFileStorage>()
+            .AddScoped<UserRepository>()
+            .AddScoped<IUnitOfWork, UnitOfWork>()
             .AddMemoryCache();
 
         var app = builder.Build();

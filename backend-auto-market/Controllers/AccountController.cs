@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using backend_auto_market.Features.Users;
 using backend_auto_market.Persistence;
 using backend_auto_market.Persistence.Models;
+using backend_auto_market.Persistence.Repositories;
 using backend_auto_market.Services;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,13 +20,15 @@ namespace backend_auto_market.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController(
+    UserRepository users,
     DataContext dataContext,
     IConfiguration configuration,
     TokenService tokenService,
     IFileStorage fileStorage,
     EmailService emailService,
     IMemoryCache memoryCache,
-    IPasswordHasher passwordHasher
+    IPasswordHasher passwordHasher,
+    IUnitOfWork unitOfWork
 )
     : ControllerBase
 {
@@ -74,7 +77,7 @@ public class AccountController(
         };
 
         await dataContext.EmailVerificationCodes.AddAsync(verificationCode);
-        await dataContext.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         await emailService.SendRegistrationEmail(user.Email, user.FirstName, randomVerificationCode);
 
@@ -87,19 +90,22 @@ public class AccountController(
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> SendVerificationEmail()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
             return BadRequest("User ID not found or invalid.");
 
-        var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+        User? user = await users.GetByIdAsync(userId);
+
         if (user == null)
             return NotFound("User not found.");
 
         if (user.IsVerified)
             return BadRequest("Email already verified.");
 
-        var existingCode = await dataContext.EmailVerificationCodes
+        EmailVerificationCode? existingCode = await dataContext.EmailVerificationCodes
             .FirstOrDefaultAsync(x => x.UserId == userId);
+
         if (existingCode != null)
         {
             dataContext.EmailVerificationCodes.Remove(existingCode);
@@ -116,7 +122,7 @@ public class AccountController(
         };
 
         await dataContext.EmailVerificationCodes.AddAsync(verificationCodeRecord);
-        await dataContext.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         try
         {
@@ -143,7 +149,7 @@ public class AccountController(
         if (!int.TryParse(userIdClaim, out var userId))
             return BadRequest("User ID is not an integer.");
 
-        var user = await dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+        User? user = await users.GetByIdAsync(userId);
 
         if (user == null)
             return NotFound();
@@ -165,10 +171,10 @@ public class AccountController(
 
         user.IsVerified = true;
 
-        dataContext.Users.Update(user);
+        users.Update(user);
         dataContext.EmailVerificationCodes.Remove(verificationCode);
 
-        await dataContext.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         return Ok();
     }
@@ -239,7 +245,7 @@ public class AccountController(
             };
 
             dataContext.Users.Add(user);
-            await dataContext.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync();
         }
 
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
@@ -295,7 +301,7 @@ public class AccountController(
         user.Password = passwordHasher.Hash(request.NewPassword);
 
         dataContext.Users.Update(user);
-        await dataContext.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         return Ok();
     }
@@ -316,7 +322,7 @@ public class AccountController(
         user.Password = newPassword;
 
         dataContext.Users.Update(user);
-        await dataContext.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         memoryCache.Remove(tempKey);
         await emailService.SendEmailAsync(user.Email, "Пароль змінено", "Пароль успішно змінено.");
@@ -356,7 +362,7 @@ public class AccountController(
             user.UrlPhoto = await fileStorage.UploadAvatar(stream, request.Photo.FileName, userId);
         }
 
-        await dataContext.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
         return Ok();
     }
 
