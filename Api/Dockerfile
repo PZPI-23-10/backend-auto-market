@@ -7,17 +7,17 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["backend-auto-market/backend-auto-market.csproj", "backend-auto-market/"]
-RUN dotnet restore "backend-auto-market/backend-auto-market.csproj"
+COPY ["backend-auto-market/Api.csproj", "backend-auto-market/"]
+RUN dotnet restore "backend-auto-market/Api.csproj"
 COPY . .
 WORKDIR "/src/backend-auto-market"
-RUN dotnet build "./backend-auto-market.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./backend-auto-market.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "backend-auto-market.dll"]
+ENTRYPOINT ["dotnet", "Api.dll"]
