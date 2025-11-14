@@ -25,26 +25,4 @@ public class EmailSender(EmailSettings configuration) : IEmailSender
         mailMessage.To.Add(toEmail);
         await client.SendMailAsync(mailMessage);
     }
-
-    public async Task SendPasswordRecoveryEmail(string toEmail, string code)
-    {
-        string subject = "Відновлення пароля — AutoMarket";
-        string body = $"""
-                       <h3>Відновлення доступу</h3>
-                       <p>Ваш код для скидання пароля:</p>
-                       <h2 style="color:#007bff;">{code}</h2>
-                       <p>Термін дії — 15 хвилин.</p>
-                       """;
-        await SendEmailAsync(toEmail, subject, body);
-    }
-
-    public async Task SendPasswordChangedInfo(string toEmail, string newPassword)
-    {
-        string subject = "Зміна пароля — AutoMarket";
-        string body = $"""
-                       <h3>Пароль змінено</h3>
-                       <p>Новий пароль:</p>
-                       <h2 style="color:#007bff;">{newPassword}</h2>
-                       """;
-    }
 }
