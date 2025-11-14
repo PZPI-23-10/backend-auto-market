@@ -107,31 +107,6 @@ public class Program
         });
 
 
-        // builder.Services.AddCors(options =>
-        // {
-        //     options.AddPolicy("AllowSwagger", policy =>
-        //     {
-        //         policy.WithOrigins("http://localhost:5291")
-        //             .AllowAnyHeader()
-        //             .AllowAnyMethod();
-        //     });
-        //
-        //     var allowedOrigins = new[]
-        //     {
-        //         "http://localhost:5291",
-        //         "https://your-production-client.com"
-        //     };
-        //
-        //     options.AddPolicy("CorsPolicy", builder =>
-        //     {
-        //         builder
-        //             .WithOrigins(allowedOrigins)
-        //             .AllowAnyHeader()
-        //             .AllowAnyMethod()
-        //             .AllowCredentials();
-        //     });
-        // });
-
         Account account = new Account(
             builder.Configuration["CloudinarySettings:CloudName"],
             builder.Configuration["CloudinarySettings:ApiKey"],
@@ -149,6 +124,7 @@ public class Program
             .AddScoped<TokenService>()
             .AddScoped<EmailService>()
             .AddSingleton(cloudinary)
+            .AddScoped<IPasswordHasher, PasswordHasher>()
             .AddMemoryCache();
 
         var app = builder.Build();

@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using backend_auto_market.Features.Users;
@@ -11,7 +10,6 @@ using CloudinaryDotNet.Actions;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +26,8 @@ public class AccountController(
     TokenService tokenService,
     Cloudinary cloudinary,
     EmailService emailService,
-    IMemoryCache memoryCache
+    IMemoryCache memoryCache,
+    IPasswordHasher passwordHasher
 )
     : ControllerBase
 {
@@ -52,9 +51,6 @@ public class AccountController(
         if (!Regex.IsMatch(request.Password, @"^[a-zA-Z0-9!@#$%^&*]+$"))
             return BadRequest("Password can only contain letters, numbers, and special characters.");
 
-        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
-        byte[] hashBytes = MD5.HashData(inputBytes);
-
         string randomVerificationCode = new Random().Next(100000, 999999).ToString();
 
         var user = new User
@@ -63,7 +59,7 @@ public class AccountController(
             LastName = request.LastName,
             Country = request.Country,
             Email = request.Email,
-            Password = Convert.ToBase64String(hashBytes),
+            Password = passwordHasher.Hash(request.Password),
             PhoneNumber = request.PhoneNumber,
             DateOfBirth = request.DateOfBirth.ToUniversalTime(),
             AboutYourself = request.AboutYourself,
@@ -87,9 +83,10 @@ public class AccountController(
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, false);
         return Ok(new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey));
     }
+
     [HttpPost]
-    [Route("send-verification-email")] 
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)] 
+    [Route("send-verification-email")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> SendVerificationEmail()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -104,7 +101,7 @@ public class AccountController(
             return BadRequest("Email already verified.");
 
         var existingCode = await dataContext.EmailVerificationCodes
-                                    .FirstOrDefaultAsync(x => x.UserId == userId); 
+            .FirstOrDefaultAsync(x => x.UserId == userId);
         if (existingCode != null)
         {
             dataContext.EmailVerificationCodes.Remove(existingCode);
@@ -115,13 +112,13 @@ public class AccountController(
         EmailVerificationCode verificationCodeRecord = new EmailVerificationCode
         {
             Code = newVerificationCode,
-            ExpirationTime = DateTime.UtcNow.AddMinutes(15), 
-            Type = VerificationType.Register, 
+            ExpirationTime = DateTime.UtcNow.AddMinutes(15),
+            Type = VerificationType.Register,
             UserId = userId
         };
 
         await dataContext.EmailVerificationCodes.AddAsync(verificationCodeRecord);
-        await dataContext.SaveChangesAsync(); 
+        await dataContext.SaveChangesAsync();
 
         try
         {
@@ -134,6 +131,7 @@ public class AccountController(
             return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send verification email.");
         }
     }
+
     [HttpPost]
     [Route("verify-email")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -185,17 +183,14 @@ public class AccountController(
             return BadRequest("All fields are required.");
 
         var user = dataContext.Users.FirstOrDefault(u => u.Email == request.Email);
+
         if (user == null)
             return Unauthorized("User with this email does not exist.");
 
         if (user.IsGoogleAuth)
             return BadRequest("This user is registered with Google authentication. Please use Google login.");
 
-        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password);
-        byte[] hashBytes = MD5.HashData(inputBytes);
-        string hashedPassword = Convert.ToBase64String(hashBytes);
-
-        if (user.Password != hashedPassword)
+        if (!passwordHasher.Verify(request.Password, user.Password))
             return Unauthorized("Invalid Password.");
 
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
@@ -287,15 +282,9 @@ public class AccountController(
             return BadRequest("All fields are required.");
         }
 
-        byte[] inputBytes = Encoding.UTF8.GetBytes(request.Password); 
-        byte[] hashBytes = MD5.HashData(inputBytes);
-        string oldHashedPassword = Convert.ToBase64String(hashBytes);
-
-        if (user.Password != oldHashedPassword) 
-        {
+        if (!passwordHasher.Verify(request.Password, user.Password))
             return BadRequest("Old password is incorrect.");
-        }
-      
+
         if (request.NewPassword.Length < 5 || request.NewPassword.Length > 27)
             return BadRequest("Password must be between 5 and 27 characters.");
 
@@ -304,18 +293,13 @@ public class AccountController(
 
         if (request.NewPassword != request.PasswordConfirmation)
             return BadRequest("New password and confirmation do not match.");
-   
 
-        byte[] newPassBytes = Encoding.UTF8.GetBytes(request.NewPassword); 
-        byte[] newHashBytes = MD5.HashData(newPassBytes);
-        string newHashedPassword = Convert.ToBase64String(newHashBytes); 
-
-        user.Password = newHashedPassword; 
+        user.Password = passwordHasher.Hash(request.NewPassword);
 
         dataContext.Users.Update(user);
-        await dataContext.SaveChangesAsync(); 
+        await dataContext.SaveChangesAsync();
 
-        return Ok(); 
+        return Ok();
     }
 
     [HttpGet("confirm-password-change")]
@@ -417,13 +401,8 @@ public class AccountController(
         if (request.Password != request.PasswordConfirmation)
             return BadRequest("New password and confirmation do not match.");
 
-
-        byte[] newPassBytes = Encoding.UTF8.GetBytes(request.Password);
-        byte[] newHashBytes = MD5.HashData(newPassBytes);
-        string newHashedPassword = Convert.ToBase64String(newHashBytes);
-
         var tempKey = Guid.NewGuid().ToString();
-        memoryCache.Set(tempKey, newHashedPassword, TimeSpan.FromMinutes(15));
+        memoryCache.Set(tempKey, passwordHasher.Hash(request.Password), TimeSpan.FromMinutes(15));
 
         var token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(tempKey));
 
