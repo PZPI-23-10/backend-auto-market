@@ -1,0 +1,77 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Application.DTOs.Auth;
+using Application.Interfaces.Services;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Infrastructure.Services;
+
+[Serializable]
+public class JwtSettings
+{
+    public string AccessSecretKey { get; set; }
+    public string RefreshSecretKey { get; set; }
+    public int DefaultAccessExpireTimeInMinutes { get; set; }
+    public int RememberAccessExpireTimeInDays { get; set; }
+    public int RefreshExpireTimeInMinutes { get; set; }
+}
+
+public class TokenService(JwtSettings jwtSettings) : ITokenService
+{
+    public Token GenerateAccessToken(string id, string email, bool rememberMe)
+    {
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, id), new(ClaimTypes.Name, email) };
+        var expirationTime = rememberMe
+            ? DateTime.UtcNow.AddDays(jwtSettings.RememberAccessExpireTimeInDays)
+            : DateTime.UtcNow.AddMinutes(jwtSettings.DefaultAccessExpireTimeInMinutes);
+
+        return GenerateToken(jwtSettings.AccessSecretKey, expirationTime, claims);
+    }
+
+    public DateTime GetTokenExpirationTime(string token)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var decodedToken = tokenHandler.ReadToken(token);
+        return decodedToken.ValidTo;
+    }
+
+    public ClaimsPrincipal ValidateAccessToken(string token)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes(jwtSettings.AccessSecretKey);
+
+        try
+        {
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero
+            }, out _);
+
+            return principal;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private Token GenerateToken(string secretKey, DateTime expirationTime, List<Claim> claims)
+    {
+        var jwtToken = new JwtSecurityToken(
+            claims: claims,
+            notBefore: DateTime.UtcNow,
+            expires: expirationTime,
+            signingCredentials: new SigningCredentials(
+                new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(secretKey)
+                ),
+                SecurityAlgorithms.HmacSha256Signature));
+
+        return new Token { TokenKey = new JwtSecurityTokenHandler().WriteToken(jwtToken), Expires = expirationTime };
+    }
+}
