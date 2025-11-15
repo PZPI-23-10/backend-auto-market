@@ -248,7 +248,6 @@ public class AccountController(
             dataContext.Users.Add(user);
             await dataContext.SaveChangesAsync();
         }
-
         var accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
         return Ok(new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey));
     }
