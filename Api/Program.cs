@@ -9,7 +9,7 @@ namespace Api;
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -33,9 +33,9 @@ public static class Program
 
         WebApplication app = builder.Build();
 
-        IServiceScope serviceScope = app.Services.CreateScope();
-        DataContext dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
-        dataContext.Database.EnsureCreated();
+        await using AsyncServiceScope serviceScope = app.Services.CreateAsyncScope();
+        await using DataContext dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+        await dataContext.Database.EnsureCreatedAsync();
 
         if (app.Environment.IsDevelopment())
         {

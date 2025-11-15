@@ -25,7 +25,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Persistence\Seed\" />
+      <None Remove="Persistence\Seed\SourceFiles\ukrainianCities.json" />
+      <EmbeddedResource Include="Persistence\Seed\SourceFiles\ukrainianCities.json" />
     </ItemGroup>
 
 </Project>

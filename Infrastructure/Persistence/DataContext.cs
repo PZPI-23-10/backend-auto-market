@@ -7,7 +7,7 @@ public class DataContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
     public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
-    public DbSet<VehicleListing> Vehicles { get; set; }
+    public DbSet<VehicleListing> VehicleListings { get; set; }
     public DbSet<VehicleBrand> VehicleBrands { get; set; }
     public DbSet<VehicleModel> VehicleModels { get; set; }
     public DbSet<VehiclePhoto> VehiclePhotos { get; set; }

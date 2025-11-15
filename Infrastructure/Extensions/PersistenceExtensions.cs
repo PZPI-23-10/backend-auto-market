@@ -2,6 +2,7 @@
 using Application.Interfaces.Persistence.Repositories;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,12 +16,20 @@ public static class PersistenceExtensions
     {
         string? connectionString = configuration.GetConnectionString("Database");
 
-        services
-            .AddDbContext<DataContext>(options => options.UseNpgsql(connectionString))
-            .AddScoped<IUserRepository, UserRepository>()
-            .AddScoped<IVerificationCodeRepository, VerificationCodeRepository>()
-            .AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString)
+            .UseAsyncSeeding(DataSeeder.Seed)
+            .UseSeeding((context, cancellationToken) =>
+                DataSeeder.Seed(context, cancellationToken)
+                    .GetAwaiter()
+                    .GetResult()
+            )
+        );
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IVerificationCodeRepository, VerificationCodeRepository>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
-    }   
+    }
 }
