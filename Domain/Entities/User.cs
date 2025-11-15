@@ -14,5 +14,6 @@ public class User : BaseAuditableEntity
     public string? Address { get; set; }
     public bool IsGoogleAuth { get; set; }
     public bool IsVerified { get; set; }
-    public ICollection<EmailVerificationCode> EmailVerificationCodes { get; set; }
+    public ICollection<EmailVerificationCode> EmailVerificationCodes { get; set; } = new List<EmailVerificationCode>();
+    public ICollection<VehicleListing> VehicleListings { get; set; } = new List<VehicleListing>();
 }
