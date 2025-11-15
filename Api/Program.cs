@@ -42,6 +42,7 @@ public static class Program
             app.UseSwaggerDocumentation();
         }
 
+        app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();
 
