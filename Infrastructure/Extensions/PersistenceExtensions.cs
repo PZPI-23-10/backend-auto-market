@@ -28,6 +28,13 @@ public static class PersistenceExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IVerificationCodeRepository, VerificationCodeRepository>();
 
+        services.AddScoped<IVehicleListingRepository, VehicleListingRepository>();
+        services.AddScoped<IVehicleBrandRepository, VehicleBrandRepository>();
+        services.AddScoped<IVehicleModelRepository, VehicleModelRepository>();
+        services.AddScoped<IVehicleBodyTypeRepository, VehicleBodyTypeRepository>();
+        services.AddScoped<IVehicleConditionRepository, VehicleConditionRepository>();
+        services.AddScoped<IVehiclePhotoRepository, VehiclePhotoRepository>();
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
