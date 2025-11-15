@@ -105,6 +105,12 @@ public class AuthService(
         if (user == null)
             throw new NotFoundException("User not found.");
 
+        if (user.IsGoogleAuth)
+        {
+            throw new ValidationException(
+                "This user is registered with Google authentication. Please use Google login.");
+        }
+
         if (!passwordHasher.Verify(request.Password, user.Password))
             throw new UnauthorizedException("Invalid Password.");
 
@@ -121,6 +127,12 @@ public class AuthService(
         if (user == null)
             throw new NotFoundException("User with this email does not exist.");
 
+        if (user.IsGoogleAuth)
+        {
+            throw new ValidationException(
+                "This user is registered with Google authentication. Please use Google login.");
+        }
+
         var tempKey = Guid.NewGuid().ToString();
         memoryCache.Set(tempKey, passwordHasher.Hash(request.Password), TimeSpan.FromMinutes(15));
 
@@ -135,6 +147,12 @@ public class AuthService(
 
         if (user == null)
             throw new NotFoundException("User not found.");
+
+        if (user.IsGoogleAuth)
+        {
+            throw new ValidationException(
+                "This user is registered with Google authentication. Please use Google login.");
+        }
 
         string tempKey = urlSafeEncoder.DecodeString(token);
 
