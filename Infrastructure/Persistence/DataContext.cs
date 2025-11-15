@@ -7,7 +7,7 @@ public class DataContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
     public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
-    public DbSet<Car> Cars { get; set; }
+    public DbSet<VehicleListing> Cars { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
