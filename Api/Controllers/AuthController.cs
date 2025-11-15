@@ -40,18 +40,8 @@ public class AuthController(
 
     [HttpPost]
     [Route("login")]
-    public async Task<IActionResult> LoginUser(
-        [FromBody] LoginUserRequest request,
-        [FromServices] IValidator<LoginUserRequest> validator
-    )
+    public async Task<IActionResult> LoginUser([FromBody] LoginUserRequest request)
     {
-        ValidationResult? validation = await validator.ValidateAsync(request);
-
-        if (!validation.IsValid)
-        {
-            return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
-        }
-
         LoginUserResponse result = await authService.LoginUser(request);
 
         return Ok(result);
