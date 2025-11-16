@@ -51,6 +51,7 @@ public class ListingService(
     public async Task UpdatePublished(int userId, int listingId, DraftVehicleListingCommand request)
     {
         await ApplyDraft(userId, listingId, request);
+        await unitOfWork.SaveChangesAsync();
     }
 
     public async Task<int> CreateDraft(int userId, DraftVehicleListingCommand dto)
@@ -85,6 +86,7 @@ public class ListingService(
     public async Task UpdateDraft(int userId, int listingId, DraftVehicleListingCommand dto)
     {
         await ApplyDraft(userId, listingId, dto);
+        await unitOfWork.SaveChangesAsync();
     }
 
     public async Task PublishDraft(int userId, int listingId, PublishedVehicleListingCommand request)
