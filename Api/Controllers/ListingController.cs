@@ -29,9 +29,11 @@ public class ListingController(IListingService listingService) : ControllerBase
         return Ok(listing);
     }
 
-    [HttpGet("user/{userId:int}")]
-    public async Task<IActionResult> GetByUserId(int userId)
+    [HttpGet("user")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> GetByAuthorizedUser()
     {
+        var userId = User.GetUserId();
         var listings = await listingService.GetUserListings(userId);
         return Ok(listings);
     }
@@ -71,11 +73,21 @@ public class ListingController(IListingService listingService) : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> Update(int id, [FromForm] DraftVehicleListingRequest request)
+    public async Task<IActionResult> UpdatePublished(int id, [FromForm] DraftVehicleListingRequest request)
     {
         int userId = User.GetUserId();
 
         await listingService.UpdatePublished(userId, id, ToDraftCommand(request));
+        return Ok();
+    }
+
+    [HttpPut("draft/{id:int}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> UpdateDraft(int id, [FromForm] DraftVehicleListingRequest request)
+    {
+        int userId = User.GetUserId();
+
+        await listingService.UpdateDraft(userId, id, ToDraftCommand(request));
         return Ok();
     }
 
