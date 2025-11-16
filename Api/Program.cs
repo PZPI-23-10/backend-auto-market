@@ -4,8 +4,6 @@ using Application.Validation;
 using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Persistence;
-using Application.Interfaces.Services;
-using Application.Services;
 
 namespace Api;
 

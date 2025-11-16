@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Persistence.Repositories;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
 
@@ -12,9 +13,9 @@ public abstract class BaseRepository<T>(DataContext context) : IBaseRepository<T
         return await context.Set<T>().FindAsync(id);
     }
 
-    public virtual async Task<IQueryable<T>> GetAllAsync()
+    public virtual async Task<List<T>> GetAllAsync()
     {
-        return await Task.FromResult(context.Set<T>().AsQueryable());
+        return await context.Set<T>().ToListAsync();
     }
 
     public virtual async Task<T> AddAsync(T entity)
