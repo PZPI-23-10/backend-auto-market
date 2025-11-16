@@ -15,7 +15,7 @@ public class GoogleTokenValidator(GoogleAuthSettings googleAuthSettings) : IGoog
             GoogleAuthPlatform.Web => googleAuthSettings.WebClientId,
             _ => throw new NotImplementedException()
         };
-
+        
         var validationSettings = new GoogleJsonWebSignature.ValidationSettings
         {
             Audience = [clientId]

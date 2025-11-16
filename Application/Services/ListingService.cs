@@ -1,32 +1,15 @@
-﻿using Application.DTOs.Listings;
+﻿using Application.DTOs.Auth;
 using Application.Interfaces.Services;
+using CreateVehicleListingRequest = Application.DTOs.Listings.CreateVehicleListingRequest;
 
 namespace Application.Services;
 
 public class ListingService : IListingService
 {
-    public async Task CreateListing(CreateVehicleListingRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task UpdateListing(UpdateListingRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task DeleteListing(int listingId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<IEnumerable<VehicleListingDto>> GetListings()
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<IEnumerable<VehicleListingDto>> GetUserListings(int userId)
-    {
-        throw new NotImplementedException();
-    }
+    Task<IEnumerable<VehicleListingResponse>> GetListingsAsync();
+    Task<VehicleListingResponse?> GetListingByIdAsync(int id);
+    Task<IEnumerable<VehicleListingResponse>> GetUserListingsAsync(int userId);
+    Task<VehicleListingResponse> CreateListingAsync(CreateVehicleListingRequest request, int userId);
+    Task UpdateListingAsync(int listingId, UpdateVehicleListingRequest request, int userId);
+    Task DeleteListingAsync(int listingId, int userId);
 }
