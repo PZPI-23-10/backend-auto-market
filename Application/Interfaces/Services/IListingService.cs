@@ -1,15 +1,14 @@
-﻿using Application.DTOs.Listings;
+﻿using Application.DTOs.Auth;
+
 
 namespace Application.Interfaces.Services;
 
 public interface IListingService
 {
-    public Task CreateListing(CreateVehicleListingRequest request);
-
-    public Task UpdateListing(UpdateListingRequest request);
-
-    public Task DeleteListing(int listingId);
-
-    public Task<IEnumerable<VehicleListingDto>> GetListings();
-    public Task<IEnumerable<VehicleListingDto>> GetUserListings(int userId);
+    Task<IEnumerable<VehicleListingResponse>> GetListingsAsync();
+    Task<VehicleListingResponse> GetListingByIdAsync(int id);
+    Task<IEnumerable<VehicleListingResponse>> GetUserListingsAsync(int userId);
+    Task<VehicleListingResponse> CreateListingAsync(CreateVehicleListingRequest request, int userId);
+    Task UpdateListingAsync(int listingId, UpdateVehicleListingRequest request, int userId);
+    Task DeleteListingAsync(int listingId, int userId);
 }

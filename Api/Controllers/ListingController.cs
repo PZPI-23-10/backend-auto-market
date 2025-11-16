@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Listings;
+﻿using Application.DTOs.Auth;
 using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -54,7 +54,7 @@ public class ListingController(IListingService listingService) : ControllerBase
     
     [HttpPut("{id}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateListingRequest request)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateVehicleListingRequest request)
     {
         var userId = GetCurrentUserId();
         if (userId == null) return Unauthorized();

@@ -2,7 +2,7 @@
 
 namespace Application.DTOs.Auth;
 
-public record UpdateListingRequest(
+public record UpdateVehicleListingRequest(
     [Required] int ModelId,
     [Required] int BodyTypeId,
     [Required] int ConditionId,
