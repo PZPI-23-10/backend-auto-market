@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+﻿using Api.Extensions;
 using Api.Models.Auth;
 using Application.DTOs.Auth;
 using Application.DTOs.Profile;
@@ -16,9 +16,6 @@ public class ProfileController(IProfileService profileService) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> UserProfile([FromQuery] int userId)
     {
-        if (userId < 0)
-            return BadRequest("UserId must be greater than zero.");
-
         var user = await profileService.GetUser(userId);
 
         //TODO: make user dto
@@ -30,13 +27,7 @@ public class ProfileController(IProfileService profileService) : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> Edit([FromForm] UpdateProfileRequest request)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim))
-            return BadRequest("User ID not found.");
-
-        if (!int.TryParse(userIdClaim, out var userId))
-            return BadRequest("User ID is not an integer.");
+        int userId = User.GetUserId();
 
         UpdateProfileDto dto = new UpdateProfileDto
         {

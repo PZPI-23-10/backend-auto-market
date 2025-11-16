@@ -10,10 +10,10 @@ public class User : BaseAuditableEntity
     public string? Country { get; set; }
     public string? AboutYourself { get; set; }
     public DateTime? DateOfBirth { get; set; }
-    public string? UrlPhoto { get; set; }
     public string? Address { get; set; }
     public bool IsGoogleAuth { get; set; }
     public bool IsVerified { get; set; }
-    public ICollection<EmailVerificationCode> EmailVerificationCodes { get; set; } = new List<EmailVerificationCode>();
-    public ICollection<VehicleListing> VehicleListings { get; set; } = new List<VehicleListing>();
+    public virtual ICollection<EmailVerificationCode> EmailVerificationCodes { get; set; } = new List<EmailVerificationCode>();
+    public virtual ICollection<VehicleListing> VehicleListings { get; set; } = new List<VehicleListing>();
+    public virtual UserAvatar? Avatar { get; set; }
 }

@@ -6,19 +6,19 @@ namespace Infrastructure.Services;
 
 public class CloudinaryFileStorage(Cloudinary cloudinary) : IFileStorage
 {
-    public async Task<string> UploadAvatar(Stream fileStream, string fileName, int userId)
+    public async Task<string> Upload(IFileUploadStrategy strategy, Stream stream, string name, int ownerId)
     {
-        var uploadParams = new ImageUploadParams
+        string path = strategy.BuildPath(ownerId);
+        Transformation transformation = strategy.BuildTransformation();
+
+        ImageUploadParams uploadParams = new ImageUploadParams
         {
-            File = new FileDescription(fileName, fileStream),
-
-            PublicId = $"avatars/{userId}/{Guid.NewGuid()}",
-
-            Transformation = new Transformation()
-                .Width(500).Height(500).Crop("fill").Gravity("face")
+            PublicId = path,
+            File = new FileDescription(name, stream),
+            Transformation = transformation
         };
 
-        ImageUploadResult? uploadResult = await cloudinary.UploadAsync(uploadParams);
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams);
 
         if (uploadResult.Error != null)
         {

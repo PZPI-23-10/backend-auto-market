@@ -10,5 +10,5 @@ public class EmailVerificationCode : BaseEntity
     public VerificationType Type { get; set; }
     public int UserId { get; set; }
 
-    [ForeignKey(nameof(UserId))] public User User { get; set; }
+    [ForeignKey(nameof(UserId))] public virtual User User { get; set; }
 }

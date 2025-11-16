@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
+using Api.Extensions;
 using Application.DTOs.Auth;
 using Application.Enums;
 using Application.Interfaces.Services;
@@ -52,12 +52,7 @@ public class AuthController(
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> VerifyEmail([FromBody] [Required] string code)
     {
-        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
-        {
-            return BadRequest("User ID not found or invalid.");
-        }
+        int userId = User.GetUserId();
 
         await verificationService.VerifyCode(userId, code);
 
@@ -69,12 +64,7 @@ public class AuthController(
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> SendVerificationEmail()
     {
-        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
-        {
-            return BadRequest("User ID not found or invalid.");
-        }
+        int userId = User.GetUserId();
 
         await verificationService.ResendRegisterCode(userId);
 
@@ -119,10 +109,7 @@ public class AuthController(
             return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
         }
 
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
-            return BadRequest("User ID not found or invalid.");
+        int userId = User.GetUserId();
 
         await authService.ChangePassword(userId, request);
 

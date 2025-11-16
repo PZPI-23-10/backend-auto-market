@@ -23,6 +23,7 @@ public static class PersistenceExtensions
                     .GetAwaiter()
                     .GetResult()
             )
+            .UseLazyLoadingProxies()
         );
 
         services.AddScoped<IUserRepository, UserRepository>();

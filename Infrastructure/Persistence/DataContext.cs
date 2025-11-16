@@ -6,6 +6,7 @@ namespace Infrastructure.Persistence;
 public class DataContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<UserAvatar> UserAvatars { get; set; }
     public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
     public DbSet<VehicleListing> VehicleListings { get; set; }
     public DbSet<VehicleBrand> VehicleBrands { get; set; }

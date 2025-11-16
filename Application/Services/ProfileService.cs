@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Profile;
+using Application.Enums;
 using Application.Exceptions;
 using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
@@ -7,7 +8,13 @@ using Domain.Entities;
 
 namespace Application.Services;
 
-public class ProfileService(IUserRepository users, IFileStorage fileStorage, IUnitOfWork unitOfWork) : IProfileService
+public class ProfileService(
+    IUserRepository users,
+    IFileStorage fileStorage,
+    IUnitOfWork unitOfWork,
+    IFileUploadStrategyFactory uploadStrategyFactory,
+    IFileHashService hashService
+) : IProfileService
 {
     public async Task<User> GetUser(int userId)
     {
@@ -32,7 +39,23 @@ public class ProfileService(IUserRepository users, IFileStorage fileStorage, IUn
 
         if (dto.Photo != null)
         {
-            user.UrlPhoto = await fileStorage.UploadAvatar(dto.Photo.Stream, dto.Photo.Name, userId);
+            string avatarHash = hashService.ComputeHash(dto.Photo.Stream);
+
+            if (user.Avatar is { IsExternal: false } && user.Avatar.Hash == avatarHash)
+            {
+                await unitOfWork.SaveChangesAsync();
+                return;
+            }
+
+            IFileUploadStrategy uploadStrategy = uploadStrategyFactory.CreateFileUploadStrategy(PhotoCategory.Avatar);
+
+            string avatarUrl = await fileStorage.Upload(uploadStrategy, dto.Photo.Stream, dto.Photo.Name, userId);
+
+            user.Avatar ??= new UserAvatar();
+
+            user.Avatar.Url = avatarUrl;
+            user.Avatar.Hash = avatarHash;
+            user.Avatar.IsExternal = false;
         }
 
         await unitOfWork.SaveChangesAsync();

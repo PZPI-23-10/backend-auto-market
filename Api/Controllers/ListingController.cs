@@ -1,15 +1,14 @@
-﻿using Application.DTOs.Auth;
+﻿using Api.Extensions;
+using Application.DTOs.Auth;
+using Api.Models.Listings;
+using Application.DTOs.Listings;
 using Application.Interfaces.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -18,87 +17,117 @@ public class ListingController(IListingService listingService) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var listings = await listingService.GetListingsAsync();
+        var listings = await listingService.GetPublishedListings();
         return Ok(listings);
     }
-    
-    [HttpGet("{id}")]
+
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var listing = await listingService.GetListingByIdAsync(id);
-        
-        if (listing == null)
-            return NotFound();
+        VehicleListingResponse listing = await listingService.GetListingById(id);
 
         return Ok(listing);
     }
-    
-    [HttpGet("user/{userId}")]
+
+    [HttpGet("user/{userId:int}")]
     public async Task<IActionResult> GetByUserId(int userId)
     {
-        var listings = await listingService.GetUserListingsAsync(userId);
+        var listings = await listingService.GetUserListings(userId);
         return Ok(listings);
     }
 
     [HttpPost]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> Create([FromBody] CreateVehicleListingRequest request)
+    public async Task<IActionResult> CreateAndPublish([FromForm] PublishedVehicleListingRequest request)
     {
-        var userId = GetCurrentUserId();
-        if (userId == null) return Unauthorized();
+        int userId = User.GetUserId();
 
-        var createdListing = await listingService.CreateListingAsync(request, userId.Value);
-        
-        return CreatedAtAction(nameof(GetById), new { id = createdListing.Id }, createdListing);
+        int listingId = await listingService.CreateAndPublish(userId, ToPublishedCommand(request));
+
+        return Ok(listingId);
     }
-    
-    [HttpPut("{id}")]
+
+    [HttpPost("draft/{id:int}/publish")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateVehicleListingRequest request)
+    public async Task<IActionResult> PublishDraft(int id, [FromForm] PublishedVehicleListingRequest request)
     {
-        var userId = GetCurrentUserId();
-        if (userId == null) return Unauthorized();
+        int userId = User.GetUserId();
 
-        try
-        {
-            await listingService.UpdateListingAsync(id, request, userId.Value);
-            return Ok();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound("Listing not found.");
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid("You are not authorized to update this listing.");
-        }
+        await listingService.PublishDraft(userId, id, ToPublishedCommand(request));
+
+        return Ok();
     }
-    
-    [HttpDelete("{id}")]
+
+    [HttpPost("draft")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> CreateDraft([FromForm] DraftVehicleListingRequest request)
+    {
+        int userId = User.GetUserId();
+
+        await listingService.CreateDraft(userId, ToDraftCommand(request));
+
+        return Ok();
+    }
+
+    [HttpPut("{id:int}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> Update(int id, [FromForm] DraftVehicleListingRequest request)
+    {
+        int userId = User.GetUserId();
+
+        await listingService.UpdatePublished(userId, id, ToDraftCommand(request));
+        return Ok();
+    }
+
+    [HttpDelete("{id:int}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> Delete(int id)
     {
-        var userId = GetCurrentUserId();
-        if (userId == null) return Unauthorized();
+        int userId = User.GetUserId();
 
-        try
-        {
-            await listingService.DeleteListingAsync(id, userId.Value);
-            return Ok();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound("Listing not found.");
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid("You are not authorized to delete this listing.");
-        }
+        await listingService.DeleteListing(id, userId);
+        return Ok();
     }
 
-    private int? GetCurrentUserId()
+    public static DraftVehicleListingCommand ToDraftCommand(DraftVehicleListingRequest request)
     {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return claim != null && int.TryParse(claim.Value, out int id) ? id : null;
+        List<FileDto> photos = (request.Photos ?? []).Select(x => new FileDto(x.FileName, x.OpenReadStream())).ToList();
+
+        return new DraftVehicleListingCommand
+        {
+            ModelId = request.ModelId,
+            BodyTypeId = request.BodyTypeId,
+            ConditionId = request.ConditionId,
+            CityId = request.CityId,
+            Year = request.Year,
+            Mileage = request.Mileage,
+            Number = request.Number,
+            ColorHex = request.ColorHex,
+            Price = request.Price,
+            Description = request.Description,
+            HasAccident = request.HasAccident,
+            Photos = photos
+        };
+    }
+
+    public static PublishedVehicleListingCommand ToPublishedCommand(PublishedVehicleListingRequest request)
+    {
+        List<FileDto> photos = (request.Photos ?? []).Select(x => new FileDto(x.FileName, x.OpenReadStream())).ToList();
+
+        return new PublishedVehicleListingCommand
+        {
+            ModelId = request.ModelId,
+            BodyTypeId = request.BodyTypeId,
+            ConditionId = request.ConditionId,
+            CityId = request.CityId,
+            Year = request.Year,
+            Mileage = request.Mileage,
+            Number = request.Number,
+            ColorHex = request.ColorHex,
+            Price = request.Price,
+            Description = request.Description,
+            HasAccident = request.HasAccident,
+            Photos = photos
+        };
     }
 }

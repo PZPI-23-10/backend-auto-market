@@ -2,5 +2,5 @@
 
 public interface IFileStorage
 {
-    Task<string> UploadAvatar(Stream fileStream, string fileName, int userId);
+    Task<string> Upload(IFileUploadStrategy strategy, Stream stream, string name, int ownerId);
 }

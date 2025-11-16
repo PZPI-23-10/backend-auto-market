@@ -5,7 +5,8 @@ namespace Domain.Entities;
 public class VehiclePhoto : BaseEntity
 {
     public int VehicleListingId { get; set; }
-    [ForeignKey(nameof(VehicleListingId))] public VehicleListing VehicleListing { get; set; }
+    [ForeignKey(nameof(VehicleListingId))] public virtual VehicleListing VehicleListing { get; set; }
 
     public string PhotoUrl { get; set; }
+    public string Hash { get; set; }
 }

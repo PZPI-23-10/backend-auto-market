@@ -1,0 +1,20 @@
+﻿using Application.DTOs.Auth;
+
+namespace Application.DTOs.Listings;
+
+public class DraftVehicleListingCommand
+{
+    public int? ModelId { get; set; }
+    public int? BodyTypeId { get; set; }
+    public int? ConditionId { get; set; }
+    public int? CityId { get; set; }
+    public int? Year { get; set; }
+    public int? Mileage { get; set; }
+    public string? Number { get; set; }
+    public string? ColorHex { get; set; }
+    public decimal? Price { get; set; }
+    public string? Description { get; set; }
+    public bool? HasAccident { get; set; }
+
+    public List<FileDto>? Photos { get; set; }
+}

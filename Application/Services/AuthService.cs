@@ -78,7 +78,11 @@ public class AuthService(
             {
                 FirstName = validationResult.FirstName,
                 LastName = validationResult.LastName,
-                UrlPhoto = validationResult.PhotoUrl,
+                Avatar = new UserAvatar
+                {
+                    Url = validationResult.PhotoUrl,
+                    IsExternal = true,
+                },
                 Email = validationResult.Email,
                 IsGoogleAuth = true
             };

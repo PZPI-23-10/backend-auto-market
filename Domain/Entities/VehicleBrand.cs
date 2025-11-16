@@ -4,5 +4,5 @@ public class VehicleBrand : BaseEntity
 {
     public string Name { get; set; }
 
-    public ICollection<VehicleModel> VehicleModels { get; set; } = new List<VehicleModel>();
+    public virtual ICollection<VehicleModel> VehicleModels { get; set; } = new List<VehicleModel>();
 }

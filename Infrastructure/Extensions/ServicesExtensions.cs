@@ -36,6 +36,9 @@ public static class ServicesExtensions
         services.AddScoped<IEmailSender, EmailSender>();
         services.AddScoped<IUrlSafeEncoder, UrlSafeEncoder>();
         services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+        services.AddScoped<IFileHashService, FileHashService>();
+
+        services.AddTransient<IFileUploadStrategyFactory, FileUploadStrategyFactory>();
 
         services.AddSingleton(emailSettings);
         services.AddSingleton(cloudinarySettings);
