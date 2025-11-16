@@ -4,6 +4,8 @@ using Application.Validation;
 using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Persistence;
+using Application.Interfaces.Services;
+using Application.Services;
 
 namespace Api;
 
@@ -31,6 +33,8 @@ public static class Program
         builder.Services.ConfigureCorsPolicy();
         builder.Services.AddMemoryCache();
 
+        builder.Services.AddScoped<IListingService, ListingService>();
+        
         WebApplication app = builder.Build();
 
         await using AsyncServiceScope serviceScope = app.Services.CreateAsyncScope();
