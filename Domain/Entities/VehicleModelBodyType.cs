@@ -2,7 +2,7 @@
 
 namespace Domain.Entities;
 
-public class VehicleModelBodyType
+public class VehicleModelBodyType : BaseEntity
 {
     public int VehicleModelId { get; set; }
     [ForeignKey(nameof(VehicleModelId))] public virtual VehicleModel VehicleModel { get; set; }
