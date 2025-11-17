@@ -84,7 +84,8 @@ public class AuthService(
                     IsExternal = true,
                 },
                 Email = validationResult.Email,
-                IsGoogleAuth = true
+                IsGoogleAuth = true,
+                IsVerified = true
             };
 
             await users.AddAsync(user);
