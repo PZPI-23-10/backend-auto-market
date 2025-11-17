@@ -1,9 +1,7 @@
 ﻿namespace Application.DTOs.Vehicle;
 
-public class VehicleBrandResponse
+public class VehicleBodyTypeResponse
 {
     public int Id { get; set; }
     public string Name { get; set; }
-
-    public List<VehicleModelResponse> Models { get; set; }
 }

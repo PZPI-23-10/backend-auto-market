@@ -8,11 +8,35 @@ public class DataSeeder
 {
     public static async Task Seed(DbContext context, bool flag, CancellationToken cancellationToken = default)
     {
+        if (!await context.Set<VehicleType>().AnyAsync(cancellationToken))
+        {
+            await context.Set<VehicleType>()
+                .AddRangeAsync(VehicleTypeSeedFactory.CreateSeedData(), cancellationToken);
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        if (!await context.Set<GearType>().AnyAsync(cancellationToken))
+        {
+            await context.Set<GearType>()
+                .AddRangeAsync(GearTypeSeedFactory.CreateSeedData(), cancellationToken);
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        
+        if (!await context.Set<FuelType>().AnyAsync(cancellationToken))
+        {
+            await context.Set<FuelType>()
+                .AddRangeAsync(FuelTypeSeedFactory.CreateSeedData(), cancellationToken);
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
         if (!await context.Set<VehicleCondition>().AnyAsync(cancellationToken: cancellationToken))
         {
             await context.Set<VehicleCondition>()
                 .AddRangeAsync(VehicleConditionsSeedFactory.CreateSeedData(), cancellationToken);
-            
+
             await context.SaveChangesAsync(cancellationToken);
         }
 
@@ -20,7 +44,7 @@ public class DataSeeder
         {
             await context.Set<VehicleBodyType>()
                 .AddRangeAsync(VehicleBodyTypeSeedFactory.CreateSeedData(), cancellationToken);
-            
+
             await context.SaveChangesAsync(cancellationToken);
         }
 
@@ -28,7 +52,7 @@ public class DataSeeder
         {
             await context.Set<VehicleBrand>()
                 .AddRangeAsync(VehicleBrandSeedFactory.CreateSeedData(), cancellationToken);
-            
+
             await context.SaveChangesAsync(cancellationToken);
         }
 
@@ -40,7 +64,7 @@ public class DataSeeder
                 modelsData,
                 cancellationToken
             );
-            
+
             await context.SaveChangesAsync(cancellationToken);
         }
 

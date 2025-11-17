@@ -1,7 +1,6 @@
 ﻿using Application.DTOs.Vehicle;
 using Application.Interfaces.Persistence.Repositories;
 using Domain.Entities;
-using Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;

@@ -5,7 +5,8 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class VehicleTypeController(IVehicleBodyTypeRepository vehicleBodyType) : ControllerBase
+public class VehicleBodyTypeController(
+    IVehicleBodyTypeRepository vehicleBodyType) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()

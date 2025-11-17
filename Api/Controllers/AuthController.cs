@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Api.Extensions;
+﻿using Api.Extensions;
 using Api.Models.Auth;
 using Application.DTOs.Auth;
 using Application.Enums;

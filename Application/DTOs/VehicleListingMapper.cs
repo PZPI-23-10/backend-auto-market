@@ -1,4 +1,6 @@
 ﻿using Application.DTOs.Listings;
+using Application.DTOs.Location;
+using Application.DTOs.Vehicle;
 using Domain.Entities;
 
 namespace Application.DTOs;
@@ -11,12 +13,24 @@ public static class VehicleListingMapper
         {
             Id = entity.Id,
             UserId = entity.UserId,
-            BrandName = entity.Model?.Brand?.Name,
-            ModelName = entity.Model?.Name,
-            BodyTypeName = entity.BodyType?.Name,
-            ConditionName = entity.Condition?.Name,
-            CityName = entity.City?.Name,
-            RegionName = entity.City?.Region?.Name,
+            BrandName = entity.ModelId != null
+                ? new VehicleBrandResponse { Id = entity.Model!.BrandId, Name = entity.Model.Brand.Name }
+                : null,
+            ModelName = entity.ModelId != null
+                ? new VehicleModelResponse { Id = entity.Model!.Id, Name = entity.Model.Name }
+                : null,
+            BodyTypeName = entity.BodyTypeId != null
+                ? new VehicleBodyTypeResponse { Id = entity.BodyType!.Id, Name = entity.BodyType.Name }
+                : null,
+            ConditionName = entity.ConditionId != null
+                ? new VehicleConditionResponse { Id = entity.Condition!.Id, Name = entity.Condition.Name }
+                : null,
+            CityName =
+                entity.CityId != null ? new CityResponse { Id = entity.City!.Id, Name = entity.City.Name } : null,
+            RegionName = entity.City != null
+                ? new RegionResponse { Id = entity.City!.Region.Id, Name = entity.City!.Region.Name }
+                : null,
+
             Year = entity.Year,
             Description = entity.Description,
             Mileage = entity.Mileage,

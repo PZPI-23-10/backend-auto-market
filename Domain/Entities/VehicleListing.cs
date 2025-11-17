@@ -11,11 +11,17 @@ public class VehicleListing : BaseAuditableEntity
     public int? ModelId { get; set; }
     [ForeignKey(nameof(ModelId))] public virtual VehicleModel? Model { get; set; }
 
+    public int? GearTypeId { get; set; }
+    [ForeignKey(nameof(GearTypeId))] public virtual GearType? GearType { get; set; }
+
     public int? BodyTypeId { get; set; }
     [ForeignKey(nameof(BodyTypeId))] public virtual VehicleBodyType? BodyType { get; set; }
 
     public int? ConditionId { get; set; }
     [ForeignKey(nameof(ConditionId))] public virtual VehicleCondition? Condition { get; set; }
+
+    public int? FuelTypeId { get; set; }
+    [ForeignKey(nameof(FuelTypeId))] public virtual FuelType? FuelType { get; set; }
 
     [MaxLength(7)] public string? ColorHex { get; set; }
 

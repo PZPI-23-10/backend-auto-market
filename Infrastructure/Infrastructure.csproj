@@ -30,4 +30,8 @@
       <EmbeddedResource Include="Persistence\Seed\SourceFiles\ukrainianCities.json" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Persistence\Migrations\" />
+    </ItemGroup>
+
 </Project>

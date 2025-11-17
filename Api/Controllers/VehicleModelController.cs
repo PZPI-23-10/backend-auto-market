@@ -27,6 +27,19 @@ public class VehicleModelController(IVehicleModelRepository vehicleModelReposito
         return Ok(GetResponse(vehicleModel));
     }
 
+    [HttpGet("{id:int}/bodyTypes")]
+    public async Task<IActionResult> GetBodyTypes(int id)
+    {
+        var vehicleModel = await vehicleModelRepository.GetByIdAsync(id);
+        
+        if (vehicleModel == null)
+            return NotFound();
+        
+        ICollection<VehicleModelBodyType> modelTypes = vehicleModel.VehicleModelBodyTypes;
+
+        return Ok(modelTypes.Select(x => new { x.BodyTypeId, x.BodyType }));
+    }
+
     private VehicleModelResponse GetResponse(VehicleModel vehicleModel)
     {
         var response = new VehicleModelResponse
@@ -34,7 +47,7 @@ public class VehicleModelController(IVehicleModelRepository vehicleModelReposito
             Id = vehicleModel.Id,
             Name = vehicleModel.Name,
         };
-        
+
         return response;
     }
 }
