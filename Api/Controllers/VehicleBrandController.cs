@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Vehicle;
+using Application.Interfaces.Persistence.Repositories;
 using Domain.Entities;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class VehicleBrandController(VehicleBrandRepository vehicleBrand) : ControllerBase
+public class VehicleBrandController(IVehicleBrandRepository vehicleBrand) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
