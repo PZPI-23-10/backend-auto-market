@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Api.Extensions;
+using Api.Models.Auth;
 using Application.DTOs.Auth;
 using Application.Enums;
 using Application.Interfaces.Services;
@@ -50,11 +51,11 @@ public class AuthController(
     [HttpPost]
     [Route("verify-email")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> VerifyEmail([FromBody] [Required] string code)
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
     {
         int userId = User.GetUserId();
 
-        await verificationService.VerifyCode(userId, code);
+        await verificationService.VerifyCode(userId, request.Code);
 
         return Ok();
     }
