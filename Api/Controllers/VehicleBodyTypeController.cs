@@ -1,4 +1,6 @@
-﻿using Application.Interfaces.Persistence.Repositories;
+﻿using Application.DTOs.Vehicle;
+using Application.Interfaces.Persistence.Repositories;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -11,18 +13,29 @@ public class VehicleBodyTypeController(
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var vehicleType = await vehicleBodyType.GetAllAsync();
-        return Ok(vehicleType);
+        var bodyTypes = await vehicleBodyType.GetAllAsync();
+        return Ok(bodyTypes.Select(GetResponse));
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var vehicleType = await vehicleBodyType.GetByIdAsync(id);
+        var bodyType = await vehicleBodyType.GetByIdAsync(id);
 
-        if (vehicleType == null)
+        if (bodyType == null)
             return NotFound();
 
-        return Ok(vehicleType);
+        return Ok(GetResponse(bodyType));
+    }
+
+    private VehicleBodyTypeResponse GetResponse(VehicleBodyType entity)
+    {
+        var response = new VehicleBodyTypeResponse
+        {
+            Id = entity.Id,
+            Name = entity.Name,
+        };
+
+        return response;
     }
 }

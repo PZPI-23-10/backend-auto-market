@@ -31,13 +31,13 @@ public class VehicleModelController(IVehicleModelRepository vehicleModelReposito
     public async Task<IActionResult> GetBodyTypes(int id)
     {
         var vehicleModel = await vehicleModelRepository.GetByIdAsync(id);
-        
+
         if (vehicleModel == null)
             return NotFound();
-        
+
         ICollection<VehicleModelBodyType> modelTypes = vehicleModel.VehicleModelBodyTypes;
 
-        return Ok(modelTypes.Select(x => new { x.BodyTypeId, x.BodyType }));
+        return Ok(modelTypes.Select(x => new VehicleBodyTypeResponse { Id = x.BodyType.Id, Name = x.BodyType.Name }));
     }
 
     private VehicleModelResponse GetResponse(VehicleModel vehicleModel)

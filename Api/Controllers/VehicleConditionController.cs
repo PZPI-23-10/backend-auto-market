@@ -1,4 +1,6 @@
-﻿using Application.Interfaces.Persistence.Repositories;
+﻿using Application.DTOs.Vehicle;
+using Application.Interfaces.Persistence.Repositories;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -10,8 +12,8 @@ public class VehicleConditionController(IVehicleConditionRepository vehicleCondi
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var vehicleCondition = await vehicleConditionRepository.GetAllAsync();
-        return Ok(vehicleCondition);
+        var vehicleConditions = await vehicleConditionRepository.GetAllAsync();
+        return Ok(vehicleConditions.Select(GetResponse));
     }
 
     [HttpGet("{id:int}")]
@@ -22,6 +24,15 @@ public class VehicleConditionController(IVehicleConditionRepository vehicleCondi
         if (vehicleCondition == null)
             return NotFound();
 
-        return Ok(vehicleCondition);
+        return Ok(GetResponse(vehicleCondition));
+    }
+
+    private VehicleConditionResponse GetResponse(VehicleCondition entity)
+    {
+        return new VehicleConditionResponse
+        {
+            Id = entity.Id,
+            Name = entity.Name,
+        };
     }
 }
