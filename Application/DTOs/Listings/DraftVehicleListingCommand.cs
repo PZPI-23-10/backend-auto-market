@@ -4,9 +4,10 @@ namespace Application.DTOs.Listings;
 
 public class DraftVehicleListingCommand
 {
-    public int? VehicleTypeId { get; set; }
     public int? ModelId { get; set; }
     public int? BodyTypeId { get; set; }
+    public int? GearTypeId { get; set; }
+    public int? FuelTypeId { get; set; }
     public int? ConditionId { get; set; }
     public int? CityId { get; set; }
     public int? Year { get; set; }

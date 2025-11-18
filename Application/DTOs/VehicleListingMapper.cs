@@ -13,22 +13,31 @@ public static class VehicleListingMapper
         {
             Id = entity.Id,
             UserId = entity.UserId,
-            BrandName = entity.ModelId != null
+            Brand = entity.ModelId != null
                 ? new VehicleBrandResponse { Id = entity.Model!.BrandId, Name = entity.Model.Brand.Name }
                 : null,
-            ModelName = entity.ModelId != null
+            Model = entity.ModelId != null
                 ? new VehicleModelResponse { Id = entity.Model!.Id, Name = entity.Model.Name }
                 : null,
-            BodyTypeName = entity.BodyTypeId != null
+            BodyType = entity.BodyTypeId != null
                 ? new VehicleBodyTypeResponse { Id = entity.BodyType!.Id, Name = entity.BodyType.Name }
                 : null,
-            ConditionName = entity.ConditionId != null
+            Condition = entity.ConditionId != null
                 ? new VehicleConditionResponse { Id = entity.Condition!.Id, Name = entity.Condition.Name }
                 : null,
-            CityName =
+            City =
                 entity.CityId != null ? new CityResponse { Id = entity.City!.Id, Name = entity.City.Name } : null,
-            RegionName = entity.City != null
+            Region = entity.City != null
                 ? new RegionResponse { Id = entity.City!.Region.Id, Name = entity.City!.Region.Name }
+                : null,
+            GearType = entity.GearTypeId != null
+                ? new GearTypeResponse { Id = entity.GearType!.Id, Name = entity.GearType.Name }
+                : null,
+            FuelType = entity.FuelTypeId != null
+                ? new FuelTypeResponse() { Id = entity.FuelType!.Id, Name = entity.FuelType.Name }
+                : null,
+            VehicleType = entity.ModelId != null
+                ? new VehicleTypeResponse { Id = entity.Model!.VehicleType.Id, Name = entity.Model.VehicleType.Name }
                 : null,
 
             Year = entity.Year,

@@ -34,7 +34,9 @@ public class ListingService(
             Mileage = dto.Mileage,
             HasAccident = dto.HasAccident,
             Price = dto.Price,
-            Number = dto.Number
+            Number = dto.Number,
+            GearTypeId = dto.GearTypeId,
+            FuelTypeId = dto.FuelTypeId
         };
 
         if (dto.Photos != null)
@@ -69,6 +71,8 @@ public class ListingService(
             Mileage = dto.Mileage,
             HasAccident = dto.HasAccident,
             Price = dto.Price,
+            FuelTypeId = dto.FuelTypeId,
+            GearTypeId = dto.GearTypeId,
             Number = dto.Number
         };
 
@@ -96,7 +100,6 @@ public class ListingService(
         if (listing.IsPublished)
             throw new ValidationException("Listing is already published");
 
-
         var draftCommand = new DraftVehicleListingCommand
         {
             ModelId = request.ModelId,
@@ -110,7 +113,9 @@ public class ListingService(
             Price = request.Price,
             Description = request.Description,
             HasAccident = request.HasAccident,
-            Photos = request.Photos
+            Photos = request.Photos,
+            GearTypeId = request.GearTypeId,
+            FuelTypeId = request.FuelTypeId
         };
 
         await ApplyDraft(userId, listing, draftCommand);
@@ -160,11 +165,13 @@ public class ListingService(
         if (dto.CityId.HasValue) listing.CityId = dto.CityId;
         if (dto.Year.HasValue) listing.Year = dto.Year;
         if (dto.Mileage.HasValue) listing.Mileage = dto.Mileage;
-        if (!string.IsNullOrEmpty(dto.Number)) listing.Number = dto.Number;
-        if (!string.IsNullOrEmpty(dto.ColorHex)) listing.ColorHex = dto.ColorHex;
+        if (dto.Number != null) listing.Number = dto.Number;
+        if (dto.ColorHex != null) listing.ColorHex = dto.ColorHex;
         if (dto.Price.HasValue) listing.Price = dto.Price;
-        if (!string.IsNullOrEmpty(dto.Description)) listing.Description = dto.Description;
+        if (dto.Description != null) listing.Description = dto.Description;
         if (dto.HasAccident.HasValue) listing.HasAccident = dto.HasAccident.Value;
+        if (dto.GearTypeId.HasValue) listing.GearTypeId = dto.GearTypeId;
+        if (dto.FuelTypeId.HasValue) listing.FuelTypeId = dto.FuelTypeId;
         if (dto.Photos != null && dto.Photos.Count != 0) await AddPhotos(userId, listing, dto.Photos);
     }
 

@@ -6,6 +6,8 @@ public class PublishedVehicleListingRequest
 {
     [Required] public int ModelId { get; set; }
     [Required] public int BodyTypeId { get; set; }
+    [Required] public int GearTypeId { get; set; }
+    [Required] public int FuelTypeId { get; set; }
     [Required] public int ConditionId { get; set; }
     [Required] public int CityId { get; set; }
     [Required] public int Year { get; set; }

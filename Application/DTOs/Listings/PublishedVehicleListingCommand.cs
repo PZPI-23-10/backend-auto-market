@@ -4,7 +4,6 @@ namespace Application.DTOs.Listings;
 
 public class PublishedVehicleListingCommand
 {
-    public int? VehicleTypeId { get; set; }
     public int ModelId { get; set; }
     public int BodyTypeId { get; set; }
     public int GearTypeId { get; set; }
@@ -18,6 +17,5 @@ public class PublishedVehicleListingCommand
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
     public bool HasAccident { get; set; } = false;
-
     public List<FileDto>? Photos { get; set; }
 }

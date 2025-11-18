@@ -8,12 +8,15 @@ public class VehicleListingResponse
 {
     public int Id { get; init; }
     public int UserId { get; init; }
-    public VehicleBrandResponse? BrandName { get; init; }
-    public VehicleModelResponse? ModelName { get; init; }
-    public VehicleBodyTypeResponse? BodyTypeName { get; init; }
-    public VehicleConditionResponse? ConditionName { get; init; }
-    public CityResponse? CityName { get; init; }
-    public RegionResponse? RegionName { get; init; }
+    public VehicleTypeResponse? VehicleType { get; init; }
+    public VehicleBrandResponse? Brand { get; init; }
+    public VehicleModelResponse? Model { get; init; }
+    public VehicleBodyTypeResponse? BodyType { get; init; }
+    public VehicleConditionResponse? Condition { get; init; }
+    public GearTypeResponse? GearType { get; init; }
+    public FuelTypeResponse? FuelType { get; init; }
+    public RegionResponse? Region { get; init; }
+    public CityResponse? City { get; init; }
     public int? Year { get; init; }
     public string? Description { get; init; }
     public int? Mileage { get; init; }
