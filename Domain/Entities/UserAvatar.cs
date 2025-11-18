@@ -9,5 +9,6 @@ public class UserAvatar : BaseEntity
 
     public string Url { get; set; }
     public string? Hash { get; set; }
+    public string? PublicId { get; set; }
     public bool IsExternal { get; set; }
 }

@@ -10,12 +10,17 @@ public class PublishedVehicleListingRequest
     [Required] public int FuelTypeId { get; set; }
     [Required] public int ConditionId { get; set; }
     [Required] public int CityId { get; set; }
-    [Required] public int Year { get; set; }
-    [Required] public int Mileage { get; set; }
+    [Required] [Range(1900, 2100)] public int Year { get; set; }
+    [Required] [Range(0, int.MaxValue)] public int Mileage { get; set; }
     [Required] public string Number { get; set; }
-    [Required] public string ColorHex { get; set; }
-    [Required] public decimal Price { get; set; }
-    public string Description { get; set; } = string.Empty;
+
+    [Required]
+    [RegularExpression("^#([A-Fa-f0-9]{6})$")]
+    [MaxLength(7)]
+    public string ColorHex { get; set; }
+
+    [Required] [Range(0, double.MaxValue)] public decimal Price { get; set; }
+    [MaxLength(2000)] public string Description { get; set; } = string.Empty;
     public bool HasAccident { get; set; } = false;
     public IFormFile[]? Photos { get; set; }
 }

@@ -21,6 +21,10 @@ public class ListingService(
 {
     public async Task<int> CreateAndPublish(int userId, PublishedVehicleListingCommand dto)
     {
+        bool isValid = await listings.IsBodyTypeValidForModel(dto.ModelId, dto.BodyTypeId);
+        if (!isValid)
+            throw new ValidationException("Selected body type is not compatible with the chosen model.");
+
         var listing = new VehicleListing
         {
             UserId = userId,
@@ -52,12 +56,26 @@ public class ListingService(
 
     public async Task UpdatePublished(int userId, int listingId, DraftVehicleListingCommand request)
     {
+        if (request is { ModelId: not null, BodyTypeId: not null })
+        {
+            bool isValid = await listings.IsBodyTypeValidForModel(request.ModelId.Value, request.BodyTypeId.Value);
+            if (!isValid)
+                throw new ValidationException("Selected body type is not compatible with the chosen model.");
+        }
+
         await ApplyDraft(userId, listingId, request);
         await unitOfWork.SaveChangesAsync();
     }
 
     public async Task<int> CreateDraft(int userId, DraftVehicleListingCommand dto)
     {
+        if (dto is { ModelId: not null, BodyTypeId: not null })
+        {
+            bool isValid = await listings.IsBodyTypeValidForModel(dto.ModelId.Value, dto.BodyTypeId.Value);
+            if (!isValid)
+                throw new ValidationException("Selected body type is not compatible with the chosen model.");
+        }
+
         var listing = new VehicleListing
         {
             UserId = userId,
@@ -76,8 +94,8 @@ public class ListingService(
             Number = dto.Number
         };
 
-        if (dto.Photos != null)
-            await AddPhotos(userId, listing, dto.Photos);
+        if (dto.NewPhotos != null)
+            await AddPhotos(userId, listing, dto.NewPhotos);
 
         listing.IsPublished = false;
 
@@ -89,16 +107,36 @@ public class ListingService(
 
     public async Task UpdateDraft(int userId, int listingId, DraftVehicleListingCommand dto)
     {
+        if (dto is { ModelId: not null, BodyTypeId: not null })
+        {
+            bool isValid = await listings.IsBodyTypeValidForModel(dto.ModelId.Value, dto.BodyTypeId.Value);
+            if (!isValid)
+                throw new ValidationException("Selected body type is not compatible with the chosen model.");
+        }
+
         await ApplyDraft(userId, listingId, dto);
         await unitOfWork.SaveChangesAsync();
     }
 
     public async Task PublishDraft(int userId, int listingId, PublishedVehicleListingCommand request)
     {
+        bool isValid = await listings.IsBodyTypeValidForModel(request.ModelId, request.BodyTypeId);
+
+        if (!isValid)
+            throw new ValidationException("Selected body type is not compatible with the chosen model.");
+
         var listing = await GetUserListing(listingId, userId);
 
         if (listing.IsPublished)
             throw new ValidationException("Listing is already published");
+
+        var newPhotos = request.Photos?
+            .Where(x => listing.Photos.All(y =>
+                y.Hash != hashService.ComputeHash(x.Stream)));
+
+        var photosToRemove = listing.Photos
+            .Where(x => request.Photos != null && request.Photos.All(y => x.Hash != hashService.ComputeHash(y.Stream)))
+            .Select(x => x.Id);
 
         var draftCommand = new DraftVehicleListingCommand
         {
@@ -113,7 +151,8 @@ public class ListingService(
             Price = request.Price,
             Description = request.Description,
             HasAccident = request.HasAccident,
-            Photos = request.Photos,
+            NewPhotos = newPhotos,
+            PhotosToRemove = photosToRemove,
             GearTypeId = request.GearTypeId,
             FuelTypeId = request.FuelTypeId
         };
@@ -173,12 +212,31 @@ public class ListingService(
         if (dto.HasAccident.HasValue) listing.HasAccident = dto.HasAccident.Value;
         if (dto.GearTypeId.HasValue) listing.GearTypeId = dto.GearTypeId;
         if (dto.FuelTypeId.HasValue) listing.FuelTypeId = dto.FuelTypeId;
-        if (dto.Photos != null && dto.Photos.Count != 0) await AddPhotos(userId, listing, dto.Photos);
+
+        if (dto.PhotosToRemove != null) await DeletePhotos(listing, dto.PhotosToRemove);
+        if (dto.NewPhotos != null) await AddPhotos(userId, listing, dto.NewPhotos);
+    }
+
+    private async Task DeletePhotos(VehicleListing listing, IEnumerable<int> photosToRemove)
+    {
+        List<VehiclePhoto> toRemove = listing.Photos.Where(p => photosToRemove.Contains(p.Id)).ToList();
+        foreach (var photo in toRemove)
+        {
+            if (!string.IsNullOrEmpty(photo.PublicId))
+                await fileStorage.Delete(photo.PublicId);
+
+            listing.Photos.Remove(photo);
+        }
     }
 
     private async Task AddPhotos(int userId, VehicleListing listing, IEnumerable<FileDto> photos)
     {
-        foreach (var photoDto in photos)
+        int availablePhotos = 10 - listing.Photos.Count;
+
+        if (availablePhotos <= 0)
+            throw new ValidationException("Maximum 10 photos are allowed");
+
+        foreach (var photoDto in photos.Take(availablePhotos))
         {
             string hash = hashService.ComputeHash(photoDto.Stream);
 
@@ -186,11 +244,13 @@ public class ListingService(
                 continue;
 
             var uploadStrategy = uploadStrategyFactory.CreateFileUploadStrategy(PhotoCategory.Listing);
-            string photoUrl = await fileStorage.Upload(uploadStrategy, photoDto.Stream, photoDto.Name, userId);
+            FileUploadResult uploadResult =
+                await fileStorage.Upload(uploadStrategy, photoDto.Stream, photoDto.Name, userId);
 
             listing.Photos.Add(new VehiclePhoto
             {
-                PhotoUrl = photoUrl,
+                PhotoUrl = uploadResult.Url,
+                PublicId = uploadResult.PublicId,
                 VehicleListing = listing,
                 Hash = hash
             });

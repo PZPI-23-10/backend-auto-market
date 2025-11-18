@@ -72,4 +72,10 @@ public class VehicleListingRepository(DataContext context)
 
         return listings;
     }
+
+    public async Task<bool> IsBodyTypeValidForModel(int modelId, int bodyTypeId)
+    {
+        return await context.VehicleModelBodyTypes
+            .AnyAsync(x => x.VehicleModelId == modelId && x.BodyTypeId == bodyTypeId);
+    }
 }

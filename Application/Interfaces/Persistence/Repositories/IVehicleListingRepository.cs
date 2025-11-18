@@ -7,4 +7,5 @@ public interface IVehicleListingRepository : IBaseRepository<VehicleListing>
 {
     Task<List<VehicleListing>> GetPublishedListingsAsync(VehicleListingFilter? filter = null);
     Task<List<VehicleListing>> GetUserListingsAsync(int userId);
+    Task<bool> IsBodyTypeValidForModel(int modelId, int bodyTypeId);
 }

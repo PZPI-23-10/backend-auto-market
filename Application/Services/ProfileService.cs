@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Profile;
+﻿using Application.DTOs;
+using Application.DTOs.Profile;
 using Application.Enums;
 using Application.Exceptions;
 using Application.Interfaces.Persistence;
@@ -66,11 +67,18 @@ public class ProfileService(
 
             IFileUploadStrategy uploadStrategy = uploadStrategyFactory.CreateFileUploadStrategy(PhotoCategory.Avatar);
 
-            string avatarUrl = await fileStorage.Upload(uploadStrategy, dto.Photo.Stream, dto.Photo.Name, userId);
+            FileUploadResult uploadResult =
+                await fileStorage.Upload(uploadStrategy, dto.Photo.Stream, dto.Photo.Name, userId);
+
+            if (user.Avatar is { PublicId: not null })
+            {
+                await fileStorage.Delete(user.Avatar.PublicId);
+            }
 
             user.Avatar ??= new UserAvatar();
 
-            user.Avatar.Url = avatarUrl;
+            user.Avatar.Url = uploadResult.Url;
+            user.Avatar.PublicId = uploadResult.PublicId;
             user.Avatar.Hash = avatarHash;
             user.Avatar.IsExternal = false;
         }

@@ -8,5 +8,6 @@ public class VehiclePhoto : BaseEntity
     [ForeignKey(nameof(VehicleListingId))] public virtual VehicleListing VehicleListing { get; set; }
 
     public string PhotoUrl { get; set; }
+    public string PublicId { get; set; }
     public string Hash { get; set; }
 }

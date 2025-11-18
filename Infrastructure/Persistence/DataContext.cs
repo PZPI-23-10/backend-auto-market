@@ -18,6 +18,7 @@ public class DataContext(DbContextOptions options) : DbContext(options)
     public DbSet<VehiclePhoto> VehiclePhotos { get; set; }
     public DbSet<VehicleCondition> VehicleConditions { get; set; }
     public DbSet<VehicleBodyType> BodyTypes { get; set; }
+    public DbSet<VehicleModelBodyType> VehicleModelBodyTypes { get; set; }
 
     public DbSet<City> Cities { get; set; }
     public DbSet<Region> Regions { get; set; }

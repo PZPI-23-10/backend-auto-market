@@ -18,5 +18,6 @@ public class DraftVehicleListingCommand
     public string? Description { get; set; }
     public bool? HasAccident { get; set; }
 
-    public List<FileDto>? Photos { get; set; }
+    public IEnumerable<FileDto>? NewPhotos { get; set; }
+    public IEnumerable<int>? PhotosToRemove { get; set; }
 }

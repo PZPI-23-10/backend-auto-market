@@ -119,7 +119,7 @@ public class ListingController(IListingService listingService) : ControllerBase
             Price = request.Price,
             Description = request.Description,
             HasAccident = request.HasAccident,
-            Photos = photos
+            NewPhotos = photos
         };
     }
 

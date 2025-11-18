@@ -1,4 +1,6 @@
-﻿namespace Api.Models.Listings;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Api.Models.Listings;
 
 public class DraftVehicleListingRequest
 {
@@ -9,11 +11,14 @@ public class DraftVehicleListingRequest
     public int? ConditionId { get; set; }
     public int? CityId { get; set; }
     public int? Year { get; set; }
-    public int? Mileage { get; set; }
-    public string? Number { get; set; }
+    [Range(0, int.MaxValue)] public int? Mileage { get; set; }
+    [Range(1900, 2100)] public string? Number { get; set; }
+
+    [RegularExpression("^#([A-Fa-f0-9]{6})$")]
     public string? ColorHex { get; set; }
-    public decimal? Price { get; set; }
-    public string? Description { get; set; }
+
+    [Range(0, double.MaxValue)] public decimal? Price { get; set; }
+    [MaxLength(2000)] public string? Description { get; set; }
     public bool? HasAccident { get; set; }
 
     public IFormFile[]? Photos { get; set; }
