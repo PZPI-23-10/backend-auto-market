@@ -12,7 +12,7 @@ public class VehicleTypeController(IVehicleTypeRepository vehicleTypes) : Contro
     [HttpGet]
     public async Task<ActionResult<IEnumerable<VehicleTypeResponse>>> GetAll()
     {
-        var vehicleModel = await vehicleTypes.GetAllAsync();
+        IEnumerable<VehicleType> vehicleModel = await vehicleTypes.GetAllAsync();
         return Ok(vehicleModel.Select(GetResponse));
     }
 

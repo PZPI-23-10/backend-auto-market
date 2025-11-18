@@ -1,5 +1,4 @@
 ﻿using Application.DTOs.Profile;
-using Domain.Entities;
 
 namespace Application.Interfaces.Services;
 

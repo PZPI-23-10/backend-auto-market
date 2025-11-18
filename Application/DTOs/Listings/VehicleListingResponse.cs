@@ -1,6 +1,5 @@
 ﻿using Application.DTOs.Location;
 using Application.DTOs.Vehicle;
-using Domain.Entities;
 
 namespace Application.DTOs.Listings;
 

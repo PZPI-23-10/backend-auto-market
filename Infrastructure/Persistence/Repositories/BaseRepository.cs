@@ -13,9 +13,14 @@ public abstract class BaseRepository<T>(DataContext context) : IBaseRepository<T
         return await context.Set<T>().FindAsync(id);
     }
 
-    public virtual async Task<List<T>> GetAllAsync()
+    public virtual async Task<IEnumerable<T>> GetAllAsync()
     {
         return await context.Set<T>().ToListAsync();
+    }
+
+    public virtual IQueryable<T> Query()
+    {
+        return context.Set<T>().AsQueryable();
     }
 
     public virtual async Task<T> AddAsync(T entity)

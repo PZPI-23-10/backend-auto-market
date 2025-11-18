@@ -8,7 +8,7 @@ namespace Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class VehicleBodyTypeController(
-    IVehicleBodyTypeRepository vehicleBodyType) : ControllerBase
+    IVehicleBodyTypeRepository vehicleBodyType, IVehicleModelRepository models) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<VehicleBodyTypeResponse>>> GetAll()
@@ -28,6 +28,19 @@ public class VehicleBodyTypeController(
         return Ok(GetResponse(bodyType));
     }
 
+    [HttpGet("for-model/{modelId:int}")]
+    public async Task<ActionResult<IEnumerable<VehicleBodyTypeResponse>>> GetBodyTypes(int modelId)
+    {
+        var vehicleModel = await models.GetByIdAsync(modelId);
+
+        if (vehicleModel == null)
+            return NotFound();
+
+        ICollection<VehicleModelBodyType> modelTypes = vehicleModel.VehicleModelBodyTypes;
+
+        return Ok(modelTypes.Select(x => new VehicleBodyTypeResponse { Id = x.BodyType.Id, Name = x.BodyType.Name }));
+    }
+    
     private VehicleBodyTypeResponse GetResponse(VehicleBodyType entity)
     {
         var response = new VehicleBodyTypeResponse
