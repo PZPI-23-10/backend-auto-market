@@ -35,6 +35,9 @@ public static class PersistenceExtensions
         services.AddScoped<IVehicleBodyTypeRepository, VehicleBodyTypeRepository>();
         services.AddScoped<IVehicleConditionRepository, VehicleConditionRepository>();
         services.AddScoped<IVehiclePhotoRepository, VehiclePhotoRepository>();
+        services.AddScoped<IVehicleTypeRepository, VehicleTypeRepository>();
+        services.AddScoped<IGearTypeRepository, GearTypeRepository>();
+        services.AddScoped<IFuelTypeRepository, FuelTypeRepository>();
 
         services.AddScoped<IRegionRepository, RegionRepository>();
         services.AddScoped<ICityRepository, CityRepository>();
