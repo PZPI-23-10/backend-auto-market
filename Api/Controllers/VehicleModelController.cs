@@ -26,7 +26,22 @@ public class VehicleModelController(IVehicleModelRepository vehicleModelReposito
 
         return Ok(GetResponse(vehicleModel));
     }
+    
+    [HttpGet("filtered")]
+    public async Task<ActionResult<IEnumerable<VehicleModelResponse>>> GetFiltered(
+        [FromQuery] int brandId, 
+        [FromQuery] int vehicleTypeId)
+    {
+        var vehicleModels = (await vehicleModelRepository.GetByBrandAndTypeAsync(brandId, vehicleTypeId)).ToList();
+        
+        if (vehicleModels == null || !vehicleModels.Any())
+            return Ok(new List<VehicleModelResponse>());
+        
+        var response = vehicleModels.Select(vm => GetResponse(vm));
 
+        return Ok(response);
+    }
+    
     private VehicleModelResponse GetResponse(VehicleModel vehicleModel)
     {
         var response = new VehicleModelResponse
