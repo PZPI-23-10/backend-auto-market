@@ -7,13 +7,24 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CityController(ICityRepository cities) : ControllerBase
+public class CityController(ICityRepository cities, IRegionRepository regions) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CityResponse>>> GetAll()
     {
         var allRegions = await cities.GetAllAsync();
         return Ok(allRegions.Select(MapEntityToDto));
+    }
+
+    [HttpGet("for-region/{regionId:int}")]
+    public async Task<ActionResult<IEnumerable<CityResponse>>> GetByRegionId(int regionId)
+    {
+        var region = await regions.GetByIdAsync(regionId);
+
+        if (region == null)
+            return NotFound();
+
+        return Ok(region.Cities.Select(MapEntityToDto));
     }
 
     [HttpGet("{id:int}")]
@@ -26,6 +37,7 @@ public class CityController(ICityRepository cities) : ControllerBase
 
         return Ok(MapEntityToDto(city));
     }
+
 
     private CityResponse MapEntityToDto(City city)
     {

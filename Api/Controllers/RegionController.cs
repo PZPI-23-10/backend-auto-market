@@ -35,9 +35,6 @@ public class RegionController(IRegionRepository regions) : ControllerBase
             Name = region.Name
         };
 
-        foreach (var city in region.Cities)
-            dto.Cities.Add(new CityResponse { Id = city.Id, Name = city.Name });
-
         return dto;
     }
 }
