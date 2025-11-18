@@ -7,13 +7,29 @@ namespace Infrastructure.Persistence.Repositories;
 public class VehicleModelRepository(DataContext context)
     : BaseRepository<VehicleModel>(context), IVehicleModelRepository
 {
-    public async Task<IEnumerable<VehicleModel>> GetByBrandAndTypeAsync(int brandId, int vehicleTypeId)
+    public async Task<IEnumerable<VehicleModel>> GetByBrandAndTypeAsync(int? brandId, int? vehicleTypeId, int? vehicleModelId)
     {
-        return await DataContext.VehicleModels
-            .Where(vm => vm.BrandId == brandId)
-            .Where(vm => vm.VehicleTypeId == vehicleTypeId)
-            .Include(vm => vm.Brand)
-            .Include(vm => vm.VehicleType)
-            .ToListAsync();
+        var query = Query();
+
+        if (vehicleModelId.HasValue)
+        {
+            query = query.Where(l => l.Id == vehicleModelId.Value);
+        }
+        
+        if (brandId.HasValue)
+        {
+            query = query.Where(l => l.BrandId == brandId);
+        }
+        
+        if (vehicleTypeId.HasValue)
+        {
+            query = query.Where(l => l.VehicleTypeId == vehicleTypeId);
+        }
+
+        query = query
+            .Include(l => l.Brand)
+            .Include(l => l.VehicleType);
+            
+            return await query.ToListAsync();
     }
 }
