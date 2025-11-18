@@ -131,14 +131,15 @@ public class ListingService(
         await unitOfWork.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<VehicleListingResponse>> GetPublishedListings()
+    public async Task<IEnumerable<VehicleListingResponse>> GetPublishedListings(VehicleListingFilter? filter = null)
     {
-        return await listings.GetPublishedListingsAsync();
+        List<VehicleListing> filtered = await listings.GetPublishedListingsAsync(filter);
+        return filtered.Select(VehicleListingMapper.ToResponseDto);
     }
 
     public async Task<IEnumerable<VehicleListingResponse>> GetUserListings(int userId)
     {
-        return await listings.GetUserListingsAsync(userId);
+        return (await listings.GetUserListingsAsync(userId)).Select(VehicleListingMapper.ToResponseDto);
     }
 
     public async Task<VehicleListingResponse> GetListingById(int id)

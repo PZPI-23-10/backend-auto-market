@@ -15,9 +15,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 public class ListingController(IListingService listingService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<VehicleListingResponse>>> GetAll()
+    public async Task<ActionResult<IEnumerable<VehicleListingResponse>>> Get(
+        [FromQuery] VehicleListingFilter? filter = null)
     {
-        var listings = await listingService.GetPublishedListings();
+        var listings = await listingService.GetPublishedListings(filter);
         return Ok(listings);
     }
 

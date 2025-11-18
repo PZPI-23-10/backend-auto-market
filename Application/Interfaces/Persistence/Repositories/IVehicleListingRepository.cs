@@ -5,6 +5,6 @@ namespace Application.Interfaces.Persistence.Repositories;
 
 public interface IVehicleListingRepository : IBaseRepository<VehicleListing>
 {
-    Task<IEnumerable<VehicleListingResponse>> GetPublishedListingsAsync();
-    Task<IEnumerable<VehicleListingResponse>> GetUserListingsAsync(int userId);
+    Task<List<VehicleListing>> GetPublishedListingsAsync(VehicleListingFilter? filter = null);
+    Task<List<VehicleListing>> GetUserListingsAsync(int userId);
 }
