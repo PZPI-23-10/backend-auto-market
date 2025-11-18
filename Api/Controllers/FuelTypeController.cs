@@ -10,14 +10,14 @@ namespace Api.Controllers;
 public class FuelTypeController(IFuelTypeRepository fuelTypes) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<FuelTypeResponse>>> GetAll()
     {
         var vehicleModel = await fuelTypes.GetAllAsync();
         return Ok(vehicleModel.Select(GetResponse));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<FuelTypeResponse>> GetById(int id)
     {
         var vehicleModel = await fuelTypes.GetByIdAsync(id);
 

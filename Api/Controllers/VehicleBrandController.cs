@@ -10,14 +10,14 @@ namespace Api.Controllers;
 public class VehicleBrandController(IVehicleBrandRepository vehicleBrand) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<VehicleBrandResponse>>> GetAll()
     {
         var brand = await vehicleBrand.GetAllAsync();
         return Ok(brand.Select(GetVehicleBrandResponse));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<VehicleBrandResponse>> GetById(int id)
     {
         var brand = await vehicleBrand.GetByIdAsync(id);
 
@@ -34,7 +34,7 @@ public class VehicleBrandController(IVehicleBrandRepository vehicleBrand) : Cont
             Id = brand.Id,
             Name = brand.Name,
         };
-        
+
         return response;
     }
 }

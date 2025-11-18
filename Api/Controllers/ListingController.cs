@@ -15,14 +15,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 public class ListingController(IListingService listingService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<VehicleListingResponse>>> GetAll()
     {
         var listings = await listingService.GetPublishedListings();
         return Ok(listings);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<VehicleListingResponse>> GetById(int id)
     {
         VehicleListingResponse listing = await listingService.GetListingById(id);
 
@@ -31,10 +31,10 @@ public class ListingController(IListingService listingService) : ControllerBase
 
     [HttpGet("user")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> GetByAuthorizedUser()
+    public async Task<ActionResult<IEnumerable<VehicleListingResponse>>> GetByAuthorizedUser()
     {
         var userId = User.GetUserId();
-        var listings = await listingService.GetUserListings(userId);
+        IEnumerable<VehicleListingResponse> listings = await listingService.GetUserListings(userId);
         return Ok(listings);
     }
 
@@ -57,7 +57,7 @@ public class ListingController(IListingService listingService) : ControllerBase
 
         await listingService.PublishDraft(userId, id, ToPublishedCommand(request));
 
-        return Ok();
+        return NoContent();
     }
 
     [HttpPost("draft")]
@@ -68,7 +68,7 @@ public class ListingController(IListingService listingService) : ControllerBase
 
         await listingService.CreateDraft(userId, ToDraftCommand(request));
 
-        return Ok();
+        return NoContent();
     }
 
     [HttpPut("{id:int}")]
@@ -78,7 +78,7 @@ public class ListingController(IListingService listingService) : ControllerBase
         int userId = User.GetUserId();
 
         await listingService.UpdatePublished(userId, id, ToDraftCommand(request));
-        return Ok();
+        return NoContent();
     }
 
     [HttpPut("draft/{id:int}")]
@@ -88,7 +88,7 @@ public class ListingController(IListingService listingService) : ControllerBase
         int userId = User.GetUserId();
 
         await listingService.UpdateDraft(userId, id, ToDraftCommand(request));
-        return Ok();
+        return NoContent();
     }
 
     [HttpDelete("{id:int}")]
@@ -98,7 +98,7 @@ public class ListingController(IListingService listingService) : ControllerBase
         int userId = User.GetUserId();
 
         await listingService.DeleteListing(id, userId);
-        return Ok();
+        return NoContent();
     }
 
     public static DraftVehicleListingCommand ToDraftCommand(DraftVehicleListingRequest request)

@@ -14,11 +14,9 @@ namespace Api.Controllers;
 public class ProfileController(IProfileService profileService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> UserProfile([FromQuery] int userId)
+    public async Task<ActionResult<UserProfileResponse>> UserProfile([FromQuery] int userId)
     {
         var user = await profileService.GetUser(userId);
-
-        //TODO: make user dto
         return Ok(user);
     }
 

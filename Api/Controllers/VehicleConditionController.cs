@@ -10,14 +10,14 @@ namespace Api.Controllers;
 public class VehicleConditionController(IVehicleConditionRepository vehicleConditionRepository) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<VehicleConditionResponse>>> GetAll()
     {
         var vehicleConditions = await vehicleConditionRepository.GetAllAsync();
         return Ok(vehicleConditions.Select(GetResponse));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<VehicleConditionResponse>> GetById(int id)
     {
         var vehicleCondition = await vehicleConditionRepository.GetByIdAsync(id);
 

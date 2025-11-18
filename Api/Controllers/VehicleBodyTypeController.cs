@@ -11,14 +11,14 @@ public class VehicleBodyTypeController(
     IVehicleBodyTypeRepository vehicleBodyType) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<VehicleBodyTypeResponse>>> GetAll()
     {
         var bodyTypes = await vehicleBodyType.GetAllAsync();
         return Ok(bodyTypes.Select(GetResponse));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<VehicleBodyTypeResponse>> GetById(int id)
     {
         var bodyType = await vehicleBodyType.GetByIdAsync(id);
 

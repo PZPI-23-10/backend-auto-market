@@ -10,14 +10,14 @@ namespace Api.Controllers;
 public class CityController(ICityRepository cities) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<CityResponse>>> GetAll()
     {
         var allRegions = await cities.GetAllAsync();
         return Ok(allRegions.Select(MapEntityToDto));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<CityResponse>> GetById(int id)
     {
         var city = await cities.GetByIdAsync(id);
 

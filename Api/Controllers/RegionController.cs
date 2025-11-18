@@ -10,14 +10,14 @@ namespace Api.Controllers;
 public class RegionController(IRegionRepository regions) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<RegionResponse>>> GetAll()
     {
         var allRegions = await regions.GetAllAsync();
         return Ok(allRegions.Select(MapEntityToDto));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<RegionResponse>> GetById(int id)
     {
         var region = await regions.GetByIdAsync(id);
 

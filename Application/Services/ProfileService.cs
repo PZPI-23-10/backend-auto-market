@@ -16,10 +16,27 @@ public class ProfileService(
     IFileHashService hashService
 ) : IProfileService
 {
-    public async Task<User> GetUser(int userId)
+    public async Task<UserProfileResponse> GetUser(int userId)
     {
         User? user = await users.GetByIdAsync(userId);
-        return user ?? throw new NotFoundException("User not found");
+
+        if (user == null)
+            throw new ApplicationException("User not found");
+
+        return new UserProfileResponse
+        {
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            PhoneNumber = user.PhoneNumber,
+            Country = user.Country,
+            AboutUrself = user.AboutYourself,
+            DateOfBirth = user.DateOfBirth,
+            Address = user.Address,
+            IsVerified = user.IsVerified,
+            IsGoogleAuth = user.IsGoogleAuth,
+            AvatarUrl = user.Avatar?.Url
+        };
     }
 
     public async Task UpdateProfile(int userId, UpdateProfileDto dto)

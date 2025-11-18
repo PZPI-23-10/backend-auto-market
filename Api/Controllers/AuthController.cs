@@ -21,7 +21,7 @@ public class AuthController(
 {
     [HttpPost]
     [Route("register")]
-    public async Task<IActionResult> RegisterUser(
+    public async Task<ActionResult<LoginUserResponse>> RegisterUser(
         [FromBody] RegisterUserRequest request,
         [FromServices] IValidator<RegisterUserRequest> validator
     )
@@ -40,7 +40,7 @@ public class AuthController(
 
     [HttpPost]
     [Route("login")]
-    public async Task<IActionResult> LoginUser([FromBody] LoginUserRequest request)
+    public async Task<ActionResult<LoginUserResponse>> LoginUser([FromBody] LoginUserRequest request)
     {
         LoginUserResponse result = await authService.LoginUser(request);
 
@@ -56,7 +56,7 @@ public class AuthController(
 
         await verificationService.VerifyCode(userId, request.Code);
 
-        return Ok();
+        return NoContent();
     }
 
     [HttpPost]
@@ -68,11 +68,11 @@ public class AuthController(
 
         await verificationService.ResendRegisterCode(userId);
 
-        return Ok();
+        return NoContent();
     }
 
     [HttpPost("android/google")]
-    public async Task<IActionResult> GoogleAndroidLogin([FromBody] GoogleLoginRequest request)
+    public async Task<ActionResult<LoginUserResponse>> GoogleAndroidLogin([FromBody] GoogleLoginRequest request)
     {
         LoginUserResponse result = await authService.LoginWithGoogle(request, GoogleAuthPlatform.Android);
 
@@ -80,7 +80,7 @@ public class AuthController(
     }
 
     [HttpPost("web/google")]
-    public async Task<IActionResult> GoogleWebLogin([FromBody] GoogleLoginRequest request)
+    public async Task<ActionResult<LoginUserResponse>> GoogleWebLogin([FromBody] GoogleLoginRequest request)
     {
         LoginUserResponse result = await authService.LoginWithGoogle(request, GoogleAuthPlatform.Web);
 
@@ -88,7 +88,7 @@ public class AuthController(
     }
 
     [HttpGet("email-exists")]
-    public async Task<IActionResult> IsEmailExists([FromQuery] string email)
+    public async Task<ActionResult<bool>> IsEmailExists([FromQuery] string email)
     {
         bool result = await authService.IsEmailExists(email);
         return Ok(result);
@@ -151,6 +151,6 @@ public class AuthController(
     {
         await authService.ConfirmPasswordReset(userId, token);
 
-        return Ok();
+        return NoContent();
     }
 }

@@ -10,14 +10,14 @@ namespace Api.Controllers;
 public class VehicleTypeController(IVehicleTypeRepository vehicleTypes) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<VehicleTypeResponse>>> GetAll()
     {
         var vehicleModel = await vehicleTypes.GetAllAsync();
         return Ok(vehicleModel.Select(GetResponse));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<VehicleTypeResponse>> GetById(int id)
     {
         var vehicleModel = await vehicleTypes.GetByIdAsync(id);
 

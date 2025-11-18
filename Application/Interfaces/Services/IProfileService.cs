@@ -5,6 +5,6 @@ namespace Application.Interfaces.Services;
 
 public interface IProfileService
 {
-    Task<User> GetUser(int userId);
+    Task<UserProfileResponse> GetUser(int userId);
     Task UpdateProfile(int userId, UpdateProfileDto dto);
 }
