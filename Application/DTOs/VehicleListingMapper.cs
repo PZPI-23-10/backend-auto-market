@@ -48,7 +48,7 @@ public static class VehicleListingMapper
             Price = entity.Price ?? 0,
             Number = entity.Number ?? "",
             IsPublished = entity.IsPublished,
-            PhotoUrls = entity.Photos.Select(p => p.PhotoUrl),
+            PhotoUrls = entity.Photos.Select(p => new PhotoResponse { Id = p.Id, Url = p.PhotoUrl }).ToArray(),
             CreatedAt = entity.Created.DateTime
         };
     }

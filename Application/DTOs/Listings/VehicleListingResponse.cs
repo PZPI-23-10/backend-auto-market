@@ -24,6 +24,6 @@ public class VehicleListingResponse
     public decimal? Price { get; init; }
     public string? Number { get; init; }
     public bool IsPublished { get; init; }
-    public IEnumerable<string> PhotoUrls { get; init; } = [];
+    public IEnumerable<PhotoResponse> PhotoUrls { get; init; } = [];
     public DateTime CreatedAt { get; init; }
 }
