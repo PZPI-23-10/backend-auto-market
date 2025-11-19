@@ -102,9 +102,9 @@ public class ListingController(IListingService listingService) : ControllerBase
         return NoContent();
     }
 
-    public static DraftVehicleListingCommand ToDraftCommand(DraftVehicleListingRequest request)
+    private static DraftVehicleListingCommand ToDraftCommand(DraftVehicleListingRequest request)
     {
-        List<FileDto> photos = (request.Photos ?? []).Select(x => new FileDto(x.FileName, x.OpenReadStream())).ToList();
+        List<FileDto> newPhotos = (request.NewPhotos ?? []).Select(x => new FileDto(x.FileName, x.OpenReadStream())).ToList();
 
         return new DraftVehicleListingCommand
         {
@@ -121,11 +121,12 @@ public class ListingController(IListingService listingService) : ControllerBase
             Price = request.Price,
             Description = request.Description,
             HasAccident = request.HasAccident,
-            NewPhotos = photos
+            PhotosToRemove = request.PhotosToRemove,
+            NewPhotos = newPhotos
         };
     }
 
-    public static PublishedVehicleListingCommand ToPublishedCommand(PublishedVehicleListingRequest request)
+    private static PublishedVehicleListingCommand ToPublishedCommand(PublishedVehicleListingRequest request)
     {
         List<FileDto> photos = (request.Photos ?? []).Select(x => new FileDto(x.FileName, x.OpenReadStream())).ToList();
 
