@@ -200,6 +200,7 @@ public class ListingService(
 
     private async Task ApplyDraft(int userId, VehicleListing listing, DraftVehicleListingCommand dto)
     {
+        if(listing.IsPublished) throw new ValidationException("Listing is already published");
         if (dto.ModelId.HasValue) listing.ModelId = dto.ModelId;
         if (dto.BodyTypeId.HasValue) listing.BodyTypeId = dto.BodyTypeId;
         if (dto.ConditionId.HasValue) listing.ConditionId = dto.ConditionId;
