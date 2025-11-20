@@ -49,6 +49,6 @@ public static class Program
         app.UseErrorHandler();
         app.MapControllers();
 
-        app.Run();
+        await app.RunAsync();
     }
 }

@@ -98,7 +98,7 @@ public class ListingController(IListingService listingService) : ControllerBase
     {
         int userId = User.GetUserId();
 
-        await listingService.DeleteListing(id, userId);
+        await listingService.DeleteListing(userId, id);
         return NoContent();
     }
 
