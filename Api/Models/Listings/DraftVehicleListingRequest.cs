@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Application.DTOs.Listings;
 
 namespace Api.Models.Listings;
 
@@ -23,5 +24,6 @@ public class DraftVehicleListingRequest
     public bool? HasAccident { get; set; }
 
     public int[]? PhotosToRemove { get; set; }
-    public IFormFile[]? NewPhotos { get; set; }
+    public OrderedFileRequest[]? NewPhotos { get; set; }
+    public ListingPhotoSortOrder[]? UpdatedPhotoSortOrder { get; set; }
 }

@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Application.DTOs;
-using Application.DTOs.Auth;
 using Application.DTOs.Listings;
 using Application.Enums;
 using Application.Exceptions;
@@ -16,7 +15,8 @@ public class ListingService(
     IFileStorage fileStorage,
     IFileUploadStrategyFactory uploadStrategyFactory,
     IFileHashService hashService,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    IVehiclePhotoRepository photos
 ) : IListingService
 {
     public async Task<int> CreateAndPublish(int userId, PublishedVehicleListingCommand dto)
@@ -40,15 +40,15 @@ public class ListingService(
             Price = dto.Price,
             Number = dto.Number,
             GearTypeId = dto.GearTypeId,
-            FuelTypeId = dto.FuelTypeId
+            FuelTypeId = dto.FuelTypeId,
+            IsPublished = true
         };
 
-        if (dto.Photos != null)
-            await AddPhotos(userId, listing, dto.Photos);
-
-        listing.IsPublished = true;
-
         await listings.AddAsync(listing);
+        await unitOfWork.SaveChangesAsync();
+        
+        await UpdatePhotos(listing, userId, newPhotos: dto.NewPhotos);
+
         await unitOfWork.SaveChangesAsync();
 
         return listing.Id;
@@ -130,13 +130,13 @@ public class ListingService(
         if (listing.IsPublished)
             throw new ValidationException("Listing is already published");
 
-        var newPhotos = request.Photos?
-            .Where(x => listing.Photos.All(y =>
-                y.Hash != hashService.ComputeHash(x.Stream)));
-
-        var photosToRemove = listing.Photos
-            .Where(x => request.Photos != null && request.Photos.All(y => x.Hash != hashService.ComputeHash(y.Stream)))
-            .Select(x => x.Id);
+        // var newPhotos = request.Photos?
+        //     .Where(x => listing.Photos.All(y =>
+        //         y.Hash != hashService.ComputeHash(x.Stream)));
+        //
+        // var photosToRemove = listing.Photos
+        //     .Where(x => request.Photos != null && request.Photos.All(y => x.Hash != hashService.ComputeHash(y.Stream)))
+        //     .Select(x => x.Id);
 
         var draftCommand = new DraftVehicleListingCommand
         {
@@ -151,10 +151,11 @@ public class ListingService(
             Price = request.Price,
             Description = request.Description,
             HasAccident = request.HasAccident,
-            NewPhotos = newPhotos,
-            PhotosToRemove = photosToRemove,
+            NewPhotos = request.NewPhotos,
+            PhotosToRemove = request.PhotosToRemove,
+            UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder,
             GearTypeId = request.GearTypeId,
-            FuelTypeId = request.FuelTypeId
+            FuelTypeId = request.FuelTypeId,
         };
 
         await ApplyDraft(userId, listing, draftCommand);
@@ -213,8 +214,49 @@ public class ListingService(
         if (dto.GearTypeId.HasValue) listing.GearTypeId = dto.GearTypeId;
         if (dto.FuelTypeId.HasValue) listing.FuelTypeId = dto.FuelTypeId;
 
-        if (dto.PhotosToRemove != null) await DeletePhotos(listing, dto.PhotosToRemove);
-        if (dto.NewPhotos != null) await AddPhotos(userId, listing, dto.NewPhotos);
+        await UpdatePhotos(listing, userId, dto.NewPhotos, dto.PhotosToRemove, dto.UpdatedPhotoSortOrder);
+    }
+
+    private async Task UpdatePhotos(VehicleListing listing, int userId, IEnumerable<OrderedFileDto>? newPhotos = null,
+        IEnumerable<int>? photosToRemove = null, IEnumerable<ListingPhotoSortOrder>? updatedPhotoSortOrder = null)
+    {
+        if (photosToRemove != null) await DeletePhotos(listing, photosToRemove);
+        if (newPhotos != null) await AddPhotos(userId, listing, newPhotos);
+        if (updatedPhotoSortOrder != null) await UpdateSortOrder(listing, updatedPhotoSortOrder);
+
+        listing.Photos = listing.Photos
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Id)
+            .ToList();
+    }
+
+    private async Task AddPhotos(int userId, VehicleListing listing, IEnumerable<OrderedFileDto> photoDtos)
+    {
+        int availablePhotos = 10 - listing.Photos.Count;
+
+        if (availablePhotos <= 0)
+            throw new ValidationException("Maximum 10 photos are allowed");
+
+        foreach (var photoDto in photoDtos.Take(availablePhotos))
+        {
+            string hash = hashService.ComputeHash(photoDto.File.Stream);
+
+            if (listing.Photos.Any(x => x.Hash == hash))
+                continue;
+
+            var uploadStrategy = uploadStrategyFactory.CreateFileUploadStrategy(PhotoCategory.Listing);
+            FileUploadResult uploadResult =
+                await fileStorage.Upload(uploadStrategy, photoDto.File.Stream, photoDto.File.Name, userId);
+
+            listing.Photos.Add(new VehiclePhoto
+            {
+                PhotoUrl = uploadResult.Url,
+                PublicId = uploadResult.PublicId,
+                VehicleListing = listing,
+                Hash = hash,
+                SortOrder = photoDto.SortOrder,
+            });
+        }
     }
 
     private async Task DeletePhotos(VehicleListing listing, IEnumerable<int> photosToRemove)
@@ -229,31 +271,14 @@ public class ListingService(
         }
     }
 
-    private async Task AddPhotos(int userId, VehicleListing listing, IEnumerable<FileDto> photos)
+    private async Task UpdateSortOrder(VehicleListing listing, IEnumerable<ListingPhotoSortOrder> updateSortOrder)
     {
-        int availablePhotos = 10 - listing.Photos.Count;
-
-        if (availablePhotos <= 0)
-            throw new ValidationException("Maximum 10 photos are allowed");
-
-        foreach (var photoDto in photos.Take(availablePhotos))
+        foreach (var photo in updateSortOrder)
         {
-            string hash = hashService.ComputeHash(photoDto.Stream);
+            var listingPhoto = listing.Photos.FirstOrDefault(x => x.Id == photo.PhotoId);
 
-            if (listing.Photos.Any(x => x.Hash == hash))
-                continue;
-
-            var uploadStrategy = uploadStrategyFactory.CreateFileUploadStrategy(PhotoCategory.Listing);
-            FileUploadResult uploadResult =
-                await fileStorage.Upload(uploadStrategy, photoDto.Stream, photoDto.Name, userId);
-
-            listing.Photos.Add(new VehiclePhoto
-            {
-                PhotoUrl = uploadResult.Url,
-                PublicId = uploadResult.PublicId,
-                VehicleListing = listing,
-                Hash = hash
-            });
+            if (listingPhoto != null)
+                listingPhoto.SortOrder = photo.SortOrder;
         }
     }
 

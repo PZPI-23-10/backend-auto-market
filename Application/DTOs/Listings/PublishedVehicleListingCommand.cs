@@ -1,6 +1,4 @@
-﻿using Application.DTOs.Auth;
-
-namespace Application.DTOs.Listings;
+﻿namespace Application.DTOs.Listings;
 
 public class PublishedVehicleListingCommand
 {
@@ -17,5 +15,8 @@ public class PublishedVehicleListingCommand
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
     public bool HasAccident { get; set; } = false;
-    public List<FileDto>? Photos { get; set; }
+
+    public IEnumerable<OrderedFileDto>? NewPhotos { get; set; }
+    public IEnumerable<int>? PhotosToRemove { get; set; }
+    public IEnumerable<ListingPhotoSortOrder>? UpdatedPhotoSortOrder { get; set; }
 }

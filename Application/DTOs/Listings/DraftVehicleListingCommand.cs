@@ -1,6 +1,4 @@
-﻿using Application.DTOs.Auth;
-
-namespace Application.DTOs.Listings;
+﻿namespace Application.DTOs.Listings;
 
 public class DraftVehicleListingCommand
 {
@@ -18,6 +16,8 @@ public class DraftVehicleListingCommand
     public string? Description { get; set; }
     public bool? HasAccident { get; set; }
 
-    public IEnumerable<FileDto>? NewPhotos { get; set; }
+    public IEnumerable<OrderedFileDto>? NewPhotos { get; set; }
     public IEnumerable<int>? PhotosToRemove { get; set; }
+
+    public IEnumerable<ListingPhotoSortOrder>? UpdatedPhotoSortOrder { get; set; }
 }

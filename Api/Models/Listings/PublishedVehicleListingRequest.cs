@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Application.DTOs.Listings;
 
 namespace Api.Models.Listings;
 
@@ -22,5 +23,8 @@ public class PublishedVehicleListingRequest
     [Required] [Range(0, double.MaxValue)] public decimal Price { get; set; }
     [MaxLength(2000)] public string Description { get; set; } = string.Empty;
     public bool HasAccident { get; set; } = false;
-    public IFormFile[]? Photos { get; set; }
+
+    public int[]? PhotosToRemove { get; set; }
+    public OrderedFileRequest[]? NewPhotos { get; set; }
+    public ListingPhotoSortOrder[]? UpdatedPhotoSortOrder { get; set; }
 }

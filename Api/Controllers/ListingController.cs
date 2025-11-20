@@ -104,7 +104,12 @@ public class ListingController(IListingService listingService) : ControllerBase
 
     private static DraftVehicleListingCommand ToDraftCommand(DraftVehicleListingRequest request)
     {
-        List<FileDto> newPhotos = (request.NewPhotos ?? []).Select(x => new FileDto(x.FileName, x.OpenReadStream())).ToList();
+        List<OrderedFileDto> newPhotos = (request.NewPhotos ?? [])
+            .Where(x => x.File != null)
+            .Select(x =>
+                new OrderedFileDto
+                    { File = new FileDto(x.File!.FileName, x.File.OpenReadStream()), SortOrder = x.SortOrder })
+            .ToList();
 
         return new DraftVehicleListingCommand
         {
@@ -122,13 +127,19 @@ public class ListingController(IListingService listingService) : ControllerBase
             Description = request.Description,
             HasAccident = request.HasAccident,
             PhotosToRemove = request.PhotosToRemove,
-            NewPhotos = newPhotos
+            NewPhotos = newPhotos,
+            UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder
         };
     }
 
     private static PublishedVehicleListingCommand ToPublishedCommand(PublishedVehicleListingRequest request)
     {
-        List<FileDto> photos = (request.Photos ?? []).Select(x => new FileDto(x.FileName, x.OpenReadStream())).ToList();
+        List<OrderedFileDto> newPhotos = (request.NewPhotos ?? [])
+            .Where(x => x.File != null)
+            .Select(x =>
+                new OrderedFileDto
+                    { File = new FileDto(x.File!.FileName, x.File.OpenReadStream()), SortOrder = x.SortOrder })
+            .ToList();
 
         return new PublishedVehicleListingCommand
         {
@@ -145,7 +156,9 @@ public class ListingController(IListingService listingService) : ControllerBase
             Price = request.Price,
             Description = request.Description,
             HasAccident = request.HasAccident,
-            Photos = photos
+            NewPhotos = newPhotos,
+            PhotosToRemove = request.PhotosToRemove,
+            UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder
         };
     }
 }
