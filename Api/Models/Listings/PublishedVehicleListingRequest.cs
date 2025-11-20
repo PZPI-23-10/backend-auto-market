@@ -21,7 +21,7 @@ public class PublishedVehicleListingRequest
     public string ColorHex { get; set; }
 
     [Required] [Range(0, double.MaxValue)] public decimal Price { get; set; }
-    [MaxLength(2000)] public string Description { get; set; } = string.Empty;
+    [MaxLength(2000)] public string? Description { get; set; } = string.Empty;
     public bool HasAccident { get; set; } = false;
 
     public int[]? PhotosToRemove { get; set; }
