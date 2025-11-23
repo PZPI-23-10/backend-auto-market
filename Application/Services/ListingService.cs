@@ -15,8 +15,7 @@ public class ListingService(
     IFileStorage fileStorage,
     IFileUploadStrategyFactory uploadStrategyFactory,
     IFileHashService hashService,
-    IUnitOfWork unitOfWork,
-    IVehiclePhotoRepository photos
+    IUnitOfWork unitOfWork
 ) : IListingService
 {
     public async Task<int> CreateAndPublish(int userId, PublishedVehicleListingCommand dto)
@@ -46,7 +45,7 @@ public class ListingService(
 
         await listings.AddAsync(listing);
         await unitOfWork.SaveChangesAsync();
-        
+
         await UpdatePhotos(listing, userId, newPhotos: dto.NewPhotos);
 
         await unitOfWork.SaveChangesAsync();
@@ -63,7 +62,9 @@ public class ListingService(
                 throw new ValidationException("Selected body type is not compatible with the chosen model.");
         }
 
-        await ApplyDraft(userId, listingId, request);
+        var listing = await GetUserListing(listingId, userId);
+
+        await ApplyDraft(userId, listing, request);
         await unitOfWork.SaveChangesAsync();
     }
 
@@ -107,6 +108,11 @@ public class ListingService(
 
     public async Task UpdateDraft(int userId, int listingId, DraftVehicleListingCommand dto)
     {
+        var listing = await GetUserListing(listingId, userId);
+
+        if (listing.IsPublished)
+            throw new ValidationException("Listing is already published");
+
         if (dto is { ModelId: not null, BodyTypeId: not null })
         {
             bool isValid = await listings.IsBodyTypeValidForModel(dto.ModelId.Value, dto.BodyTypeId.Value);
@@ -114,7 +120,7 @@ public class ListingService(
                 throw new ValidationException("Selected body type is not compatible with the chosen model.");
         }
 
-        await ApplyDraft(userId, listingId, dto);
+        await ApplyDraft(userId, listing, dto);
         await unitOfWork.SaveChangesAsync();
     }
 
@@ -129,14 +135,6 @@ public class ListingService(
 
         if (listing.IsPublished)
             throw new ValidationException("Listing is already published");
-
-        // var newPhotos = request.Photos?
-        //     .Where(x => listing.Photos.All(y =>
-        //         y.Hash != hashService.ComputeHash(x.Stream)));
-        //
-        // var photosToRemove = listing.Photos
-        //     .Where(x => request.Photos != null && request.Photos.All(y => x.Hash != hashService.ComputeHash(y.Stream)))
-        //     .Select(x => x.Id);
 
         var draftCommand = new DraftVehicleListingCommand
         {
@@ -192,15 +190,8 @@ public class ListingService(
         return VehicleListingMapper.ToResponseDto(listing);
     }
 
-    private async Task ApplyDraft(int userId, int listingId, DraftVehicleListingCommand dto)
-    {
-        var listing = await GetUserListing(listingId, userId);
-        await ApplyDraft(userId, listing, dto);
-    }
-
     private async Task ApplyDraft(int userId, VehicleListing listing, DraftVehicleListingCommand dto)
     {
-        if(listing.IsPublished) throw new ValidationException("Listing is already published");
         if (dto.ModelId.HasValue) listing.ModelId = dto.ModelId;
         if (dto.BodyTypeId.HasValue) listing.BodyTypeId = dto.BodyTypeId;
         if (dto.ConditionId.HasValue) listing.ConditionId = dto.ConditionId;
