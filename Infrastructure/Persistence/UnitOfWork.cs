@@ -15,11 +15,11 @@ public class UnitOfWork(DataContext context) : IUnitOfWork
 
     private void UpdateAuditableEntities()
     {
-        IEnumerable<EntityEntry<BaseAuditableEntity>> auditableEntities = context
+        IEnumerable<EntityEntry<IAuditableEntity>> auditableEntities = context
             .ChangeTracker
-            .Entries<BaseAuditableEntity>();
+            .Entries<IAuditableEntity>();
 
-        foreach (EntityEntry<BaseAuditableEntity> entity in auditableEntities)
+        foreach (EntityEntry<IAuditableEntity> entity in auditableEntities)
         {
             DateTime now = DateTime.UtcNow;
 

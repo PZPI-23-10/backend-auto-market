@@ -1,8 +1,10 @@
 ﻿using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
+using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence.Seed;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +46,20 @@ public static class PersistenceExtensions
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+        return services;
+    }
+
+    public static async Task<IServiceProvider> SeedIdentity(this IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+        if (!await roleManager.RoleExistsAsync(UserRoles.Admin))
+            await roleManager.CreateAsync(new IdentityRole<int>(UserRoles.Admin));
+
+        if (!await roleManager.RoleExistsAsync(UserRoles.User))
+            await roleManager.CreateAsync(new IdentityRole<int>(UserRoles.User));
+        
         return services;
     }
 }

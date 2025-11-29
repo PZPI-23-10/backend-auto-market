@@ -30,12 +30,12 @@ public class AuthService(
             LastName = request.LastName,
             Country = request.Country,
             Email = request.Email,
-            Password = passwordHasher.Hash(request.Password),
+            PasswordHash = passwordHasher.Hash(request.Password),
             PhoneNumber = request.PhoneNumber,
             DateOfBirth = request.DateOfBirth.ToUniversalTime(),
             AboutYourself = request.AboutYourself,
             Address = request.Address,
-            IsVerified = false,
+            EmailConfirmed = false,
         };
 
         await verificationService.SendRegisterCode(user);
@@ -58,7 +58,7 @@ public class AuthService(
             throw new ValidationException(
                 "This user is registered with Google authentication. Please use Google login.");
 
-        if (!passwordHasher.Verify(request.Password, user.Password))
+        if (!passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedException("Invalid Password.");
 
         Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
@@ -85,7 +85,7 @@ public class AuthService(
                 },
                 Email = validationResult.Email,
                 IsGoogleAuth = true,
-                IsVerified = true
+                EmailConfirmed = true
             };
 
             await users.AddAsync(user);
@@ -116,10 +116,10 @@ public class AuthService(
                 "This user is registered with Google authentication. Please use Google login.");
         }
 
-        if (!passwordHasher.Verify(request.Password, user.Password))
+        if (!passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedException("Invalid Password.");
 
-        user.Password = passwordHasher.Hash(request.NewPassword);
+        user.PasswordHash = passwordHasher.Hash(request.NewPassword);
 
         users.Update(user);
         await unitOfWork.SaveChangesAsync();
@@ -164,7 +164,7 @@ public class AuthService(
         if (!memoryCache.TryGetValue(tempKey, out string? newPassword))
             throw new ValidationException("Link expired or invalid.");
 
-        user.Password = newPassword;
+        user.PasswordHash = newPassword;
 
         users.Update(user);
         await unitOfWork.SaveChangesAsync();

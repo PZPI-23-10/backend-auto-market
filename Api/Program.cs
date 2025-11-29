@@ -1,9 +1,11 @@
 using Api.Extensions;
 using Application.Extensions;
 using Application.Validation;
+using Domain.Entities;
 using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Persistence;
+using Microsoft.AspNetCore.Identity;
 
 namespace Api;
 
@@ -15,6 +17,10 @@ public static class Program
 
         builder.Services.AddJwtAuthentication(builder.Configuration);
         builder.Services.AddAuthorization();
+
+        builder.Services.AddIdentityCore<User>()
+            .AddRoles<IdentityRole<int>>()
+            .AddEntityFrameworkStores<DataContext>();
 
         builder.Services.AddApiControllers();
 
@@ -36,6 +42,8 @@ public static class Program
         await using AsyncServiceScope serviceScope = app.Services.CreateAsyncScope();
         await using DataContext dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
         await dataContext.Database.EnsureCreatedAsync();
+
+        await app.Services.SeedIdentity();
 
         if (app.Environment.IsDevelopment())
         {

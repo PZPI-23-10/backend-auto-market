@@ -34,7 +34,7 @@ public class ProfileService(
             AboutUrself = user.AboutYourself,
             DateOfBirth = user.DateOfBirth,
             Address = user.Address,
-            IsVerified = user.IsVerified,
+            IsVerified = user.EmailConfirmed,
             IsGoogleAuth = user.IsGoogleAuth,
             AvatarUrl = user.Avatar?.Url
         };

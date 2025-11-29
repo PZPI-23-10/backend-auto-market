@@ -30,7 +30,7 @@ public class VerificationService(
         if (user == null)
             throw new NotFoundException("User not found.");
 
-        if (user.IsVerified)
+        if (user.EmailConfirmed)
             throw new ValidationException("Email already verified.");
 
         string code = await EnsureVerificationCode(user, VerificationType.Register);
@@ -58,7 +58,7 @@ public class VerificationService(
         if (verification.ExpirationTime < DateTime.UtcNow)
             throw new ValidationException("Verification code has expired.");
 
-        user.IsVerified = true;
+        user.EmailConfirmed = true;
 
         verifications.Remove(verification);
         users.Update(user);
