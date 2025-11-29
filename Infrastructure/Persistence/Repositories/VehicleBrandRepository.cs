@@ -11,4 +11,8 @@ public class VehicleBrandRepository(DataContext context)
     {
         return await DataContext.Set<VehicleBrand>().AnyAsync(x => x.Name == name);
     }
+    public async Task<bool> ExistsById(int id)
+    {
+        return await DataContext.Set<VehicleBrand>().AnyAsync(b => b.Id == id);
+    }
 }

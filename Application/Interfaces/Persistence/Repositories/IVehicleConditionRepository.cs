@@ -2,4 +2,7 @@
 
 namespace Application.Interfaces.Persistence.Repositories;
 
-public interface IVehicleConditionRepository : IBaseRepository<VehicleCondition> { }
+public interface IVehicleConditionRepository : IBaseRepository<VehicleCondition>
+{
+    Task<bool> Exists(string name);
+}

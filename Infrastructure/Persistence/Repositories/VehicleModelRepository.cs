@@ -32,4 +32,9 @@ public class VehicleModelRepository(DataContext context)
             
             return await query.ToListAsync();
     }
+
+    public async Task<bool> Exists(string name)
+    {
+        return await DataContext.Set<VehicleModel>().AnyAsync(l => l.Name == name);
+    }
 }
