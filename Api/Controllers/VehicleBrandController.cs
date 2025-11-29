@@ -1,6 +1,9 @@
 ﻿using Application.DTOs.Vehicle;
+using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +11,10 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class VehicleBrandController(IVehicleBrandRepository vehicleBrands, IVehicleTypeRepository vehicleTypes)
+public class VehicleBrandController(
+    IVehicleBrandRepository vehicleBrands,
+    IVehicleTypeRepository vehicleTypes,
+    IUnitOfWork unitOfWork)
     : ControllerBase
 {
     [HttpGet]
@@ -43,6 +49,36 @@ public class VehicleBrandController(IVehicleBrandRepository vehicleBrands, IVehi
         List<VehicleBrand> availableBrands = await brandsQuery.ToListAsync();
 
         return Ok(availableBrands.Select(GetResponse));
+    }
+
+    [HttpPost]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
+    public async Task<IActionResult> Create([FromBody] string name)
+    {
+        if (await vehicleBrands.Exists(name))
+            return BadRequest("Vehicle brand with that name already exists");
+
+        var brand = new VehicleBrand { Name = name };
+        await vehicleBrands.AddAsync(brand);
+
+        await unitOfWork.SaveChangesAsync();
+
+        return Ok(brand.Id);
+    }
+
+    [HttpPost]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
+    public async Task<IActionResult> Delete([FromQuery] int id)
+    {
+        var brand = await vehicleBrands.GetByIdAsync(id);
+
+        if (brand == null)
+            return BadRequest("Vehicle brand with that id does not exist");
+
+        vehicleBrands.Remove(brand);
+        await unitOfWork.SaveChangesAsync();
+
+        return Ok();
     }
 
     private VehicleBrandResponse GetResponse(VehicleBrand brand)
