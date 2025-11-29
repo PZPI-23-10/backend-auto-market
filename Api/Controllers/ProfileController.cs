@@ -3,6 +3,7 @@ using Api.Models.Auth;
 using Application.DTOs.Auth;
 using Application.DTOs.Profile;
 using Application.Interfaces.Services;
+using Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,30 @@ public class ProfileController(IProfileService profileService) : ControllerBase
         };
 
         await profileService.UpdateProfile(userId, dto);
+
+        return Ok();
+    }
+
+    [HttpDelete]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
+    public async Task<IActionResult> Delete([FromQuery] int userId)
+    {
+        await profileService.DeleteUser(userId);
+
+        return Ok();
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<string>>> GetRoles()
+    {
+        return Ok(new[] { UserRoles.Admin, UserRoles.User });
+    }
+
+    [HttpDelete]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
+    public async Task<IActionResult> AssignRole([FromQuery] int userId, string role)
+    {
+        await profileService.AddToRole(userId, role);
 
         return Ok();
     }

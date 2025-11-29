@@ -6,6 +6,7 @@ using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Application.Services;
 
@@ -14,8 +15,8 @@ public class ProfileService(
     IFileStorage fileStorage,
     IUnitOfWork unitOfWork,
     IFileUploadStrategyFactory uploadStrategyFactory,
-    IFileHashService hashService
-) : IProfileService
+    IFileHashService hashService,
+    UserManager<User> userManager) : IProfileService
 {
     public async Task<UserProfileResponse> GetUser(int userId)
     {
@@ -23,6 +24,8 @@ public class ProfileService(
 
         if (user == null)
             throw new ApplicationException("User not found");
+
+        IEnumerable<string> userRoles = await userManager.GetRolesAsync(user);
 
         return new UserProfileResponse
         {
@@ -36,7 +39,8 @@ public class ProfileService(
             Address = user.Address,
             IsVerified = user.EmailConfirmed,
             IsGoogleAuth = user.IsGoogleAuth,
-            AvatarUrl = user.Avatar?.Url
+            AvatarUrl = user.Avatar?.Url,
+            Roles = userRoles,
         };
     }
 
@@ -84,5 +88,30 @@ public class ProfileService(
         }
 
         await unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task DeleteUser(int userId)
+    {
+        var user = await users.GetByIdAsync(userId);
+
+        if (user == null)
+            throw new NotFoundException("User not found");
+
+        users.Remove(user);
+
+        await unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task AddToRole(int userId, string role)
+    {
+        if (role != UserRoles.Admin && role != UserRoles.User)
+            throw new NotFoundException("Unknown role");
+
+        User? user = await users.GetByIdAsync(userId);
+
+        if (user == null)
+            throw new NotFoundException("User not found");
+
+        await userManager.AddToRoleAsync(user, role);
     }
 }

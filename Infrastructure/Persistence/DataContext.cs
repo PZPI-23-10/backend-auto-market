@@ -7,7 +7,6 @@ namespace Infrastructure.Persistence;
 
 public class DataContext(DbContextOptions options) : IdentityDbContext<User, IdentityRole<int>, int>(options)
 {
-    public DbSet<User> Users { get; set; }
     public DbSet<UserAvatar> UserAvatars { get; set; }
     public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
 
@@ -28,7 +27,7 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<User, Ide
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+        
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Email).IsUnique();

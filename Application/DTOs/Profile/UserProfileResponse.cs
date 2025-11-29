@@ -13,4 +13,5 @@ public class UserProfileResponse
     public bool? IsGoogleAuth { get; set; }
     public bool? IsVerified { get; set; }
     public string? AvatarUrl { get; set; }
+    public IEnumerable<string>? Roles { get; set; }
 }
