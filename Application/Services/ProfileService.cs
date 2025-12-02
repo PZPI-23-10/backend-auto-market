@@ -48,10 +48,12 @@ public class ProfileService(
     {
         IEnumerable<User> allUsers = await users.GetAllAsync();
 
-        IEnumerable<Task<UserProfileResponse>> tasks = allUsers.Select(async user =>
+        var result = new List<UserProfileResponse>();
+
+        foreach (var user in allUsers)
         {
-            IEnumerable<string> userRoles = await userManager.GetRolesAsync(user);
-            return new UserProfileResponse
+            IList<string> roles = await userManager.GetRolesAsync(user);
+            result.Add(new UserProfileResponse
             {
                 Email = user.Email,
                 FirstName = user.FirstName,
@@ -64,11 +66,11 @@ public class ProfileService(
                 IsVerified = user.EmailConfirmed,
                 IsGoogleAuth = user.IsGoogleAuth,
                 AvatarUrl = user.Avatar?.Url,
-                Roles = userRoles,
-            };
-        });
+                Roles = roles
+            });
+        }
 
-        return await Task.WhenAll(tasks);
+        return result;
     }
 
     public async Task UpdateProfile(int userId, UpdateProfileDto dto)
