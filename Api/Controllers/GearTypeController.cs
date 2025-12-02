@@ -45,7 +45,7 @@ public class GearTypeController(IGearTypeRepository gearTypes, UnitOfWork unitOf
         return Ok(gearType.Id);
     }
 
-    [HttpPost]
+    [HttpDelete]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
     public async Task<IActionResult> Delete([FromQuery] int id)
     {

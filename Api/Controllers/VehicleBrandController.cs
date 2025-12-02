@@ -66,7 +66,7 @@ public class VehicleBrandController(
         return Ok(brand.Id);
     }
 
-    [HttpPost]
+    [HttpDelete]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
     public async Task<IActionResult> Delete([FromQuery] int id)
     {

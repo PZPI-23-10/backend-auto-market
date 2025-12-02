@@ -55,12 +55,14 @@ public class ProfileController(IProfileService profileService) : ControllerBase
     }
 
     [HttpGet]
+    [Route("roles")]
     public async Task<ActionResult<IEnumerable<string>>> GetRoles()
     {
         return Ok(new[] { UserRoles.Admin, UserRoles.User });
     }
 
-    [HttpDelete]
+    [HttpPost]
+    [Route("roles")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
     public async Task<IActionResult> AssignRole([FromQuery] int userId, string role)
     {

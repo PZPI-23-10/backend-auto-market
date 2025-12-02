@@ -45,7 +45,7 @@ public class FuelTypeController(IFuelTypeRepository fuelTypes, UnitOfWork unitOf
         return Ok(fuelType.Id);
     }
 
-    [HttpPost]
+    [HttpDelete]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
     public async Task<IActionResult> Delete([FromQuery] int id)
     {
