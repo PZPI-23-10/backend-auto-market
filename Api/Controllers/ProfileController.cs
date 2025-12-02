@@ -21,6 +21,15 @@ public class ProfileController(IProfileService profileService) : ControllerBase
         return Ok(user);
     }
 
+    [HttpGet]
+    [Route("all")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Admin)]
+    public async Task<ActionResult<IEnumerable<UserProfileResponse>>> GetAllProfiles()
+    {
+        IEnumerable<UserProfileResponse> profiles = await profileService.GetAllUsers();
+        return Ok(profiles);
+    }
+
     [HttpPut]
     [Route("update")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]

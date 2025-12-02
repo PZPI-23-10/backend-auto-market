@@ -44,6 +44,33 @@ public class ProfileService(
         };
     }
 
+    public async Task<IEnumerable<UserProfileResponse>> GetAllUsers()
+    {
+        IEnumerable<User> allUsers = await users.GetAllAsync();
+
+        IEnumerable<Task<UserProfileResponse>> tasks = allUsers.Select(async user =>
+        {
+            IEnumerable<string> userRoles = await userManager.GetRolesAsync(user);
+            return new UserProfileResponse
+            {
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber,
+                Country = user.Country,
+                AboutUrself = user.AboutYourself,
+                DateOfBirth = user.DateOfBirth,
+                Address = user.Address,
+                IsVerified = user.EmailConfirmed,
+                IsGoogleAuth = user.IsGoogleAuth,
+                AvatarUrl = user.Avatar?.Url,
+                Roles = userRoles,
+            };
+        });
+
+        return await Task.WhenAll(tasks);
+    }
+
     public async Task UpdateProfile(int userId, UpdateProfileDto dto)
     {
         var user = await users.GetByIdAsync(userId);
