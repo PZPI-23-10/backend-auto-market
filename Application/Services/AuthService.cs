@@ -6,6 +6,7 @@ using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Application.Services;
@@ -19,8 +20,8 @@ public class AuthService(
     IGoogleTokenValidator googleTokenValidator,
     IMemoryCache memoryCache,
     IUrlSafeEncoder urlSafeEncoder,
-    IEmailSender emailSender
-) : IAuthService
+    IEmailSender emailSender,
+    UserManager<User> userManager) : IAuthService
 {
     public async Task<LoginUserResponse> RegisterUser(RegisterUserRequest request)
     {
@@ -41,6 +42,8 @@ public class AuthService(
         await verificationService.SendRegisterCode(user);
 
         await unitOfWork.SaveChangesAsync();
+
+        await userManager.AddToRoleAsync(user, UserRoles.User);
 
         Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, false);
 
@@ -90,6 +93,7 @@ public class AuthService(
 
             await users.AddAsync(user);
             await unitOfWork.SaveChangesAsync();
+            await userManager.AddToRoleAsync(user, UserRoles.User);
         }
 
         Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
