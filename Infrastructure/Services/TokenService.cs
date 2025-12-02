@@ -19,9 +19,13 @@ public class JwtSettings
 
 public class TokenService(JwtSettings jwtSettings) : ITokenService
 {
-    public Token GenerateAccessToken(string id, string email, bool rememberMe)
+    public Token GenerateAccessToken(string id, string email, IEnumerable<string> roles, bool rememberMe)
     {
-        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, id), new(ClaimTypes.Name, email) };
+        var claims = new List<Claim>
+            { new(ClaimTypes.NameIdentifier, id), new(ClaimTypes.Name, email) };
+
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
         var expirationTime = rememberMe
             ? DateTime.UtcNow.AddDays(jwtSettings.RememberAccessExpireTimeInDays)
             : DateTime.UtcNow.AddMinutes(jwtSettings.DefaultAccessExpireTimeInMinutes);
@@ -49,7 +53,7 @@ public class TokenService(JwtSettings jwtSettings) : ITokenService
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = false,
                 ValidateAudience = false,
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.Zero,
             }, out _);
 
             return principal;

@@ -45,7 +45,7 @@ public class AuthService(
 
         await userManager.AddToRoleAsync(user, UserRoles.User);
 
-        Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, false);
+        Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, [UserRoles.User], false);
 
         return new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey);
     }
@@ -63,8 +63,9 @@ public class AuthService(
 
         if (!passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedException("Invalid Password.");
-
-        Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
+        
+        IList<string> roles = await userManager.GetRolesAsync(user);
+        Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, roles, request.RememberMe);
 
         return new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey);
     }
@@ -96,7 +97,9 @@ public class AuthService(
             await userManager.AddToRoleAsync(user, UserRoles.User);
         }
 
-        Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, request.RememberMe);
+        IList<string> roles = await userManager.GetRolesAsync(user);
+
+        Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, roles, request.RememberMe);
         var loginUserResponse = new LoginUserResponse(user.Id.ToString(), accessToken.TokenKey);
 
         return loginUserResponse;
