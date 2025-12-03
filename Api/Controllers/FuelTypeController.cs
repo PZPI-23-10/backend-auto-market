@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Vehicle;
+using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
 using Domain.Entities;
 using Infrastructure.Persistence;
@@ -10,7 +11,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class FuelTypeController(IFuelTypeRepository fuelTypes, UnitOfWork unitOfWork) : ControllerBase
+public class FuelTypeController(IFuelTypeRepository fuelTypes, IUnitOfWork unitOfWork) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FuelTypeResponse>>> GetAll()
