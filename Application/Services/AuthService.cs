@@ -31,7 +31,6 @@ public class AuthService(
             LastName = request.LastName,
             Country = request.Country,
             Email = request.Email,
-            PasswordHash = passwordHasher.Hash(request.Password),
             PhoneNumber = request.PhoneNumber,
             DateOfBirth = request.DateOfBirth.ToUniversalTime(),
             AboutYourself = request.AboutYourself,
@@ -39,8 +38,12 @@ public class AuthService(
             EmailConfirmed = false,
         };
 
-        await verificationService.SendRegisterCode(user);
+        IdentityResult createResult = await userManager.CreateAsync(user, request.Password);
 
+        if (!createResult.Succeeded)
+            throw new InvalidOperationException("Registration failed");
+
+        await verificationService.SendRegisterCode(user);
         await unitOfWork.SaveChangesAsync();
 
         await userManager.AddToRoleAsync(user, UserRoles.User);
@@ -63,7 +66,7 @@ public class AuthService(
 
         if (!passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedException("Invalid Password.");
-        
+
         IList<string> roles = await userManager.GetRolesAsync(user);
         Token accessToken = tokenService.GenerateAccessToken(user.Id.ToString(), user.Email, roles, request.RememberMe);
 
@@ -92,8 +95,11 @@ public class AuthService(
                 EmailConfirmed = true
             };
 
-            await users.AddAsync(user);
-            await unitOfWork.SaveChangesAsync();
+            IdentityResult result = await userManager.CreateAsync(user);
+
+            if (!result.Succeeded)
+                throw new InvalidOperationException("Login failed");
+
             await userManager.AddToRoleAsync(user, UserRoles.User);
         }
 
