@@ -1,11 +1,11 @@
-﻿using Application.DTOs.Auth;
+using Application.DTOs.Auth;
 using FluentValidation;
 
 namespace Application.Validation;
 
-public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
 {
-    public ResetPasswordRequestValidator()
+    public ForgotPasswordRequestValidator()
     {
         RuleFor(x => x.Email)
             .EmailAddress()

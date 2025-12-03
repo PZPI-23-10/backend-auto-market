@@ -7,18 +7,15 @@ using Application.Interfaces.Persistence.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Application.Services;
 
 public class AuthService(
     IUserRepository users,
     IVerificationService verificationService,
-    IPasswordHasher passwordHasher,
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
     IGoogleTokenValidator googleTokenValidator,
-    IMemoryCache memoryCache,
     IUrlSafeEncoder urlSafeEncoder,
     IEmailSender emailSender,
     UserManager<User> userManager) : IAuthService
@@ -29,6 +26,7 @@ public class AuthService(
         {
             FirstName = request.FirstName,
             LastName = request.LastName,
+            UserName = request.Email,
             Country = request.Country,
             Email = request.Email,
             PhoneNumber = request.PhoneNumber,
@@ -41,7 +39,8 @@ public class AuthService(
         IdentityResult createResult = await userManager.CreateAsync(user, request.Password);
 
         if (!createResult.Succeeded)
-            throw new InvalidOperationException("Registration failed");
+            throw new InvalidOperationException(
+                $"Register failed with errors: {string.Join(',', createResult.Errors.Select(e => e.Code))}");
 
         await verificationService.SendRegisterCode(user);
         await unitOfWork.SaveChangesAsync();
@@ -64,7 +63,7 @@ public class AuthService(
             throw new ValidationException(
                 "This user is registered with Google authentication. Please use Google login.");
 
-        if (!passwordHasher.Verify(request.Password, user.PasswordHash))
+        if (!await userManager.CheckPasswordAsync(user, request.Password))
             throw new UnauthorizedException("Invalid Password.");
 
         IList<string> roles = await userManager.GetRolesAsync(user);
@@ -92,13 +91,15 @@ public class AuthService(
                 },
                 Email = validationResult.Email,
                 IsGoogleAuth = true,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                UserName = validationResult.Email,
             };
 
             IdentityResult result = await userManager.CreateAsync(user);
 
             if (!result.Succeeded)
-                throw new InvalidOperationException("Login failed");
+                throw new InvalidOperationException(
+                    $"Login failed with errors: {string.Join(',', result.Errors.Select(e => e.Code))}");
 
             await userManager.AddToRoleAsync(user, UserRoles.User);
         }
@@ -129,16 +130,13 @@ public class AuthService(
                 "This user is registered with Google authentication. Please use Google login.");
         }
 
-        if (!passwordHasher.Verify(request.Password, user.PasswordHash))
+        IdentityResult result = await userManager.ChangePasswordAsync(user, request.Password, request.NewPassword);
+
+        if (!result.Succeeded)
             throw new UnauthorizedException("Invalid Password.");
-
-        user.PasswordHash = passwordHasher.Hash(request.NewPassword);
-
-        users.Update(user);
-        await unitOfWork.SaveChangesAsync();
     }
 
-    public async Task<ResetPasswordResult> RequestPasswordReset(ResetPasswordRequest request)
+    public async Task<ResetPasswordResult> RequestPasswordReset(ForgotPasswordRequest request)
     {
         var user = await users.GetUserByEmail(request.Email);
 
@@ -151,17 +149,15 @@ public class AuthService(
                 "This user is registered with Google authentication. Please use Google login.");
         }
 
-        var tempKey = Guid.NewGuid().ToString();
-        memoryCache.Set(tempKey, passwordHasher.Hash(request.Password), TimeSpan.FromMinutes(15));
+        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        string urlSafeToken = urlSafeEncoder.EncodeString(resetToken);
 
-        string token = urlSafeEncoder.EncodeString(tempKey);
-
-        return new ResetPasswordResult(user.Id, token);
+        return new ResetPasswordResult(user.Id, urlSafeToken);
     }
 
-    public async Task ConfirmPasswordReset(int userId, string token)
+    public async Task ConfirmPasswordReset(string userEmail, string encodedToken, string newPassword)
     {
-        var user = await users.GetByIdAsync(userId);
+        var user = await userManager.FindByEmailAsync(userEmail);
 
         if (user == null)
             throw new NotFoundException("User not found.");
@@ -172,17 +168,9 @@ public class AuthService(
                 "This user is registered with Google authentication. Please use Google login.");
         }
 
-        string tempKey = urlSafeEncoder.DecodeString(token);
+        string token = urlSafeEncoder.DecodeString(encodedToken);
 
-        if (!memoryCache.TryGetValue(tempKey, out string? newPassword))
-            throw new ValidationException("Link expired or invalid.");
-
-        user.PasswordHash = newPassword;
-
-        users.Update(user);
-        await unitOfWork.SaveChangesAsync();
-
-        memoryCache.Remove(tempKey);
+        await userManager.ResetPasswordAsync(user, token, newPassword);
         await emailSender.SendEmailAsync(user.Email, "Пароль змінено", "Пароль успішно змінено.");
     }
 }

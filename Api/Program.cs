@@ -18,7 +18,14 @@ public static class Program
         builder.Services.AddJwtAuthentication(builder.Configuration);
         builder.Services.AddAuthorization();
 
-        builder.Services.AddIdentityCore<User>()
+        builder.Services.AddIdentityCore<User>(options =>
+            {
+                options.Password.RequiredLength = 6;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+            })
             .AddRoles<IdentityRole<int>>()
             .AddEntityFrameworkStores<DataContext>();
 

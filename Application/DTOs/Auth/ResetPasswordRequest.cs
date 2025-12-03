@@ -3,7 +3,7 @@
 namespace Application.DTOs.Auth;
 
 public record ResetPasswordRequest(
-    [Required] string Password,
-    [Required] string PasswordConfirmation,
-    [Required] string Email
+    [Required] string Email,
+    [Required] string Token,
+    [Required] string NewPassword
 );

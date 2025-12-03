@@ -7,7 +7,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ResetPasswordRequest = Application.DTOs.Auth.ResetPasswordRequest;
 using ValidationResult = FluentValidation.Results.ValidationResult;
 
 namespace Api.Controllers;
@@ -119,8 +118,8 @@ public class AuthController(
     [HttpPost]
     [Route("reset-password")]
     public async Task<IActionResult> PasswordReset(
-        [FromBody] ResetPasswordRequest request,
-        [FromServices] IValidator<ResetPasswordRequest> validator
+        [FromBody] ForgotPasswordRequest request,
+        [FromServices] IValidator<ForgotPasswordRequest> validator
     )
     {
         ValidationResult? validatorResult = await validator.ValidateAsync(request);
@@ -132,24 +131,20 @@ public class AuthController(
 
         ResetPasswordResult result = await authService.RequestPasswordReset(request);
 
-        var callbackUrl = Url.Action(
-            nameof(ConfirmPasswordChange), "Auth",
-            new { userId = result.UserId, token = result.Token },
-            protocol: Request.Scheme
-        );
+        string resetLink = $"{request.ClientUrl}/reset-password?email={request.Email}&token={result.Token}";
 
         await emailService.SendEmailAsync(
             request.Email,
             "Підтвердження зміни пароля",
-            $"Для підтвердження зміни пароля перейдіть по посиланню: {callbackUrl}");
+            $"Для підтвердження зміни пароля перейдіть по посиланню: {resetLink}");
 
         return Ok();
     }
 
     [HttpGet("confirm-password-change")]
-    public async Task<IActionResult> ConfirmPasswordChange([FromQuery] int userId, [FromQuery] string token)
+    public async Task<IActionResult> ConfirmPasswordChange([FromBody] ResetPasswordRequest request)
     {
-        await authService.ConfirmPasswordReset(userId, token);
+        await authService.ConfirmPasswordReset(request.Email, request.Token, request.NewPassword);
 
         return NoContent();
     }
