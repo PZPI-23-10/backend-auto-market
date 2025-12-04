@@ -26,9 +26,11 @@ public class ProfileService(
             throw new ApplicationException("User not found");
 
         IEnumerable<string> userRoles = await userManager.GetRolesAsync(user);
-
+        
         return new UserProfileResponse
         {
+            Id = user.Id,
+            DateCreated = user.Created,
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
@@ -55,6 +57,8 @@ public class ProfileService(
             IList<string> roles = await userManager.GetRolesAsync(user);
             result.Add(new UserProfileResponse
             {
+                Id = user.Id,
+                DateCreated = user.Created,
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,

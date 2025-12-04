@@ -24,6 +24,32 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<User, Ide
     public DbSet<City> Cities { get; set; }
     public DbSet<Region> Regions { get; set; }
 
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        UpdateAuditableEntities();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+    
+    private void UpdateAuditableEntities()
+    {
+        var entries = ChangeTracker.Entries<IAuditableEntity>();
+
+        foreach (var e in entries)
+        {
+            var now = DateTime.UtcNow;
+
+            if (e.State == EntityState.Added)
+            {
+                e.Property(x => x.Created).CurrentValue = now;
+                e.Property(x => x.LastModified).CurrentValue = now;
+            }
+            else if (e.State == EntityState.Modified)
+            {
+                e.Property(x => x.LastModified).CurrentValue = now;
+            }
+        }
+    }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
