@@ -114,7 +114,7 @@ public class AuthService(
 
     public async Task<bool> IsEmailExists(string email)
     {
-        return await users.UserWithEmailExists(email);
+        return await userManager.FindByEmailAsync(email) != null;
     }
 
     public async Task ChangePassword(int userId, ChangePasswordRequest request)
