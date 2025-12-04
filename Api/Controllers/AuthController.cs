@@ -131,7 +131,7 @@ public class AuthController(
 
         ResetPasswordResult result = await authService.RequestPasswordReset(request);
 
-        string resetLink = $"{request.ClientUrl}/reset-password?email={request.Email}&token={result.Token}";
+        string resetLink = $"{request.ClientUrl}?email={request.Email}&token={result.Token}";
 
         await emailService.SendEmailAsync(
             request.Email,

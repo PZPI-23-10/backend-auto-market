@@ -27,6 +27,7 @@ public static class Program
                 options.Password.RequireNonAlphanumeric = true;
             })
             .AddRoles<IdentityRole<int>>()
+            .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<DataContext>();
 
         builder.Services.AddApiControllers();
