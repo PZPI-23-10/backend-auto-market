@@ -141,7 +141,7 @@ public class AuthController(
         return Ok();
     }
 
-    [HttpGet("confirm-password-change")]
+    [HttpPost("confirm-password-change")]
     public async Task<IActionResult> ConfirmPasswordChange([FromBody] ResetPasswordRequest request)
     {
         await authService.ConfirmPasswordReset(request.Email, request.Token, request.NewPassword);
