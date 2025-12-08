@@ -7,9 +7,6 @@ namespace Api.Controllers
     [Route("api/[controller]")]
     public class VehicleCheckController : ControllerBase
     {
-        private const string ApiKey = "62fee967df633514fcee3765522226dc";
-        private const string BaseUrl = "https://baza-gai.com.ua/nomer/";
-
         private readonly IHttpClientFactory _httpClientFactory;
 
         public VehicleCheckController(IHttpClientFactory httpClientFactory)
@@ -22,66 +19,93 @@ namespace Api.Controllers
         {
             var cleanPlate = licensePlate.Replace(" ", "").ToUpper();
 
-            var request = new HttpRequestMessage(HttpMethod.Get, BaseUrl + cleanPlate);
-            request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("X-Api-Key", ApiKey);
+            var client = _httpClientFactory.CreateClient("BazaGaiClient");
 
-            var client = _httpClientFactory.CreateClient();
-            var response = await client.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                    return NotFound(new { message = "Авто не знайдено в базі МВС" });
+                var response = await client.GetAsync(cleanPlate);
+                var jsonString = await response.Content.ReadAsStringAsync();
 
-                return StatusCode((int)response.StatusCode, new { message = "Помилка зовнішнього API" });
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        return NotFound(new { message = "Авто не знайдено в базі" });
+
+                    return StatusCode((int)response.StatusCode, new
+                    {
+                        message = "Помилка зовнішнього API",
+                        statusCode = response.StatusCode,
+                        externalResponse = jsonString
+                    });
+                }
+
+                using var document = JsonDocument.Parse(jsonString);
+                var root = document.RootElement;
+
+                if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("error", out var errorElement))
+                {
+                    return BadRequest(new { message = "API Error", details = errorElement.ToString() });
+                }
+
+                JsonElement lastOperation = new JsonElement();
+                bool hasOperations = root.TryGetProperty("operations", out var operations) && operations.GetArrayLength() > 0;
+
+                if (hasOperations)
+                {
+                    lastOperation = operations[0];
+                }
+
+                string colorValue = "Не вказано";
+                if (hasOperations && lastOperation.TryGetProperty("color", out var c))
+                {
+                    if (lang == "en" && c.TryGetProperty("slug", out var slug)) colorValue = slug.GetString();
+                    else if (c.TryGetProperty("ua", out var ua)) colorValue = ua.GetString();
+                }
+                string operationValue = "Інформація відсутня";
+                if (hasOperations && lastOperation.TryGetProperty("operation", out var op))
+                {
+                    if (op.TryGetProperty("ua", out var opUa)) operationValue = opUa.GetString();
+                }
+                var result = new
+                {
+                    Brand = root.TryGetProperty("vendor", out var v) ? v.GetString() : "Unknown",
+                    Model = root.TryGetProperty("model", out var m) ? m.GetString() : "Unknown",
+                    Year = root.TryGetProperty("model_year", out var y) ? y.GetInt32() : 0,
+                    PhotoUrl = root.TryGetProperty("photo_url", out var p) ? p.GetString() : null,
+                    IsStolen = root.TryGetProperty("is_stolen", out var s) && s.GetBoolean(),
+                    Color = colorValue,
+                    EngineCapacity = hasOperations && lastOperation.TryGetProperty("displacement", out var d) ? d.GetInt32() : 0,
+                    Fuel = "Gas/Petrol",
+                    LastOperationDate = hasOperations && lastOperation.TryGetProperty("registered_at", out var dReg) ? dReg.GetString() : "",
+                    LastOperationName = operationValue
+                };
+
+                return Ok(result);
             }
-
-            var jsonString = await response.Content.ReadAsStringAsync();
-
-            using var document = JsonDocument.Parse(jsonString);
-            var root = document.RootElement;
-
-            JsonElement lastOperation = new JsonElement();
-            bool hasOperations = root.TryGetProperty("operations", out var operations) && operations.GetArrayLength() > 0;
-
-            if (hasOperations)
+            catch (HttpRequestException ex)
             {
-                lastOperation = operations[0];
+                return StatusCode(500, new
+                {
+                    message = "Помилка з'єднання з базою",
+                    details = ex.Message
+                });
             }
-
-            string colorValue = "Не вказано";
-            if (hasOperations && lastOperation.TryGetProperty("color", out var c))
+            catch (JsonException ex)
             {
-                if (lang == "en" && c.TryGetProperty("slug", out var slug)) colorValue = slug.GetString();
-                else if (c.TryGetProperty("ua", out var ua)) colorValue = ua.GetString();
+                return StatusCode(500, new
+                {
+                    message = "Некорректный ответ от внешнего API (не JSON)",
+                    details = ex.Message
+                });
             }
-
-            string operationValue = "Інформація відсутня";
-            if (hasOperations && lastOperation.TryGetProperty("operation", out var op))
+            catch (Exception ex)
             {
-                if (op.TryGetProperty("ua", out var opUa)) operationValue = opUa.GetString();
+                return StatusCode(500, new
+                {
+                    message = "Внутрішня помилка сервера",
+                    details = ex.Message
+                });
             }
-
-            var result = new
-            {
-                Brand = root.TryGetProperty("vendor", out var v) ? v.GetString() : "Unknown",
-                Model = root.TryGetProperty("model", out var m) ? m.GetString() : "Unknown",
-                Year = root.TryGetProperty("model_year", out var y) ? y.GetInt32() : 0,
-                PhotoUrl = root.TryGetProperty("photo_url", out var p) ? p.GetString() : null,
-                IsStolen = root.TryGetProperty("is_stolen", out var s) && s.GetBoolean(),
-
-                Color = colorValue,
-
-                EngineCapacity = hasOperations && lastOperation.TryGetProperty("displacement", out var d) ? d.GetInt32() : 0,
-
-                Fuel = "Gas/Petrol", 
-
-                LastOperationDate = hasOperations && lastOperation.TryGetProperty("registered_at", out var dReg) ? dReg.GetString() : "",
-                LastOperationName = operationValue
-            };
-
-            return Ok(result);
         }
     }
 }

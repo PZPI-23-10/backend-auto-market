@@ -6,6 +6,7 @@ using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
+using System.Net.Http; // Нужно для HttpClientHandler
 
 namespace Api;
 
@@ -19,13 +20,13 @@ public static class Program
         builder.Services.AddAuthorization();
 
         builder.Services.AddIdentityCore<User>(options =>
-            {
-                options.Password.RequiredLength = 6;
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = true;
-            })
+        {
+            options.Password.RequiredLength = 6;
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequireNonAlphanumeric = true;
+        })
             .AddRoles<IdentityRole<int>>()
             .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<DataContext>();
@@ -41,6 +42,27 @@ public static class Program
         builder.Services.AddApplicationServices();
 
         builder.Services.AddPersistence(builder.Configuration);
+
+        builder.Services.AddHttpClient("BazaGaiClient", client =>
+        {
+            client.BaseAddress = new Uri("https://baza-gai.com.ua/nomer/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            client.DefaultRequestHeaders.Add("X-Api-Key", "62fee967df633514fcee3765522226dc");
+
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        })
+        .ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            var handler = new HttpClientHandler();
+
+            handler.AllowAutoRedirect = true;
+
+            handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
+
+            return handler;
+        });
 
         builder.Services.ConfigureCorsPolicy();
         builder.Services.AddMemoryCache();
