@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using Application.DTOs;
 using Application.DTOs.Listings;
 using Application.Enums;
@@ -24,6 +25,12 @@ public class ListingService(
         if (!isValid)
             throw new ValidationException("Selected body type is not compatible with the chosen model.");
 
+        // --- VALIDATION: VIN ---
+        if (!string.IsNullOrEmpty(dto.Vin))
+        {
+            ValidateVin(dto.Vin);
+        }
+
         var listing = new VehicleListing
         {
             UserId = userId,
@@ -42,9 +49,8 @@ public class ListingService(
             FuelTypeId = dto.FuelTypeId,
             IsPublished = true,
 
-            // --- NEW: VIN Logic ---
             Vin = dto.Vin,
-            IsVerified = IsVinValid(dto.Vin)
+            IsVerified = !string.IsNullOrEmpty(dto.Vin) 
         };
 
         await listings.AddAsync(listing);
@@ -81,6 +87,12 @@ public class ListingService(
                 throw new ValidationException("Selected body type is not compatible with the chosen model.");
         }
 
+        // --- VALIDATION: VIN (Optional for Draft, but if present must be valid) ---
+        if (!string.IsNullOrEmpty(dto.Vin))
+        {
+            ValidateVin(dto.Vin);
+        }
+
         var listing = new VehicleListing
         {
             UserId = userId,
@@ -98,9 +110,9 @@ public class ListingService(
             GearTypeId = dto.GearTypeId,
             Number = dto.Number,
 
-            // --- NEW: VIN Logic ---
+            // --- VIN Logic ---
             Vin = dto.Vin,
-            IsVerified = IsVinValid(dto.Vin)
+            IsVerified = !string.IsNullOrEmpty(dto.Vin)
         };
 
         if (dto.NewPhotos != null)
@@ -163,7 +175,7 @@ public class ListingService(
             GearTypeId = request.GearTypeId,
             FuelTypeId = request.FuelTypeId,
 
-            // --- NEW: Pass Vin from Publish command to Draft command logic ---
+            // --- Pass VIN ---
             Vin = request.Vin
         };
 
@@ -219,8 +231,9 @@ public class ListingService(
 
         if (dto.Vin != null)
         {
+            ValidateVin(dto.Vin); 
             listing.Vin = dto.Vin;
-            listing.IsVerified = IsVinValid(dto.Vin);
+            listing.IsVerified = !string.IsNullOrEmpty(dto.Vin);
         }
 
         await UpdatePhotos(listing, userId, dto.NewPhotos, dto.PhotosToRemove, dto.UpdatedPhotoSortOrder);
@@ -303,8 +316,16 @@ public class ListingService(
         return listing;
     }
 
-    private bool IsVinValid(string? vin)
+    private void ValidateVin(string? vin)
     {
-        return !string.IsNullOrWhiteSpace(vin) && vin.Length == 17;
+        if (string.IsNullOrWhiteSpace(vin)) return;
+
+        if (vin.Length != 17)
+            throw new ValidationException("VIN code must be exactly 17 characters long.");
+
+        if (!Regex.IsMatch(vin, "^[A-HJ-NPR-Z0-9]{17}$"))
+        {
+            throw new ValidationException("VIN contains invalid characters. Letters I, O, and Q are not allowed.");
+        }
     }
 }
