@@ -33,10 +33,9 @@ public class VehicleListing : BaseAuditableEntity
     public int? Mileage { get; set; }
     public bool? HasAccident { get; set; }
     public decimal? Price { get; set; }
-
     public string? Number { get; set; }
-
     public bool IsPublished { get; set; } = false;
-
+    public string? Vin { get; set; }
+    public bool IsVerified { get; set; } = false;
     public virtual ICollection<VehiclePhoto> Photos { get; set; } = new List<VehiclePhoto>();
 }
