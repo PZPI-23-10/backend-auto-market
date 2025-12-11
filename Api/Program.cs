@@ -63,7 +63,7 @@ public static class Program
 
             return handler;
         });
-
+        builder.Services.AddScoped<Application.Interfaces.Services.IVehicleVerificationService, Infrastructure.Services.VehicleVerificationService>();
         builder.Services.ConfigureCorsPolicy();
         builder.Services.AddMemoryCache();
 

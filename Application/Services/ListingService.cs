@@ -6,7 +6,7 @@ using Application.Enums;
 using Application.Exceptions;
 using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
-using Application.Interfaces.Services;
+using Application.Interfaces.Services; 
 using Domain.Entities;
 
 namespace Application.Services;
@@ -16,7 +16,8 @@ public class ListingService(
     IFileStorage fileStorage,
     IFileUploadStrategyFactory uploadStrategyFactory,
     IFileHashService hashService,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    IVehicleVerificationService verificationService 
 ) : IListingService
 {
     public async Task<int> CreateAndPublish(int userId, PublishedVehicleListingCommand dto)
@@ -25,10 +26,18 @@ public class ListingService(
         if (!isValid)
             throw new ValidationException("Selected body type is not compatible with the chosen model.");
 
-        // --- VALIDATION: VIN ---
         if (!string.IsNullOrEmpty(dto.Vin))
         {
             ValidateVin(dto.Vin);
+        }
+        bool isVerified = false;
+
+        string? identifierToCheck = !string.IsNullOrEmpty(dto.Vin) ? dto.Vin : dto.Number;
+
+        if (!string.IsNullOrEmpty(identifierToCheck))
+        {
+            var checkResult = await verificationService.CheckVehicleAsync(identifierToCheck);
+            isVerified = checkResult.IsFound;
         }
 
         var listing = new VehicleListing
@@ -44,20 +53,20 @@ public class ListingService(
             Mileage = dto.Mileage,
             HasAccident = dto.HasAccident,
             Price = dto.Price,
-            Number = dto.Number,
             GearTypeId = dto.GearTypeId,
             FuelTypeId = dto.FuelTypeId,
-            IsPublished = true,
 
+            Number = dto.Number,
             Vin = dto.Vin,
-            IsVerified = !string.IsNullOrEmpty(dto.Vin) 
+
+            IsVerified = isVerified, 
+            IsPublished = true
         };
 
         await listings.AddAsync(listing);
         await unitOfWork.SaveChangesAsync();
 
         await UpdatePhotos(listing, userId, newPhotos: dto.NewPhotos);
-
         await unitOfWork.SaveChangesAsync();
 
         return listing.Id;
@@ -87,10 +96,17 @@ public class ListingService(
                 throw new ValidationException("Selected body type is not compatible with the chosen model.");
         }
 
-        // --- VALIDATION: VIN (Optional for Draft, but if present must be valid) ---
         if (!string.IsNullOrEmpty(dto.Vin))
         {
             ValidateVin(dto.Vin);
+        }
+
+        bool isVerified = false;
+        string? identifierToCheck = !string.IsNullOrEmpty(dto.Vin) ? dto.Vin : dto.Number;
+        if (!string.IsNullOrEmpty(identifierToCheck))
+        {
+            var checkResult = await verificationService.CheckVehicleAsync(identifierToCheck);
+            isVerified = checkResult.IsFound;
         }
 
         var listing = new VehicleListing
@@ -108,17 +124,16 @@ public class ListingService(
             Price = dto.Price,
             FuelTypeId = dto.FuelTypeId,
             GearTypeId = dto.GearTypeId,
-            Number = dto.Number,
 
-            // --- VIN Logic ---
+            Number = dto.Number,
             Vin = dto.Vin,
-            IsVerified = !string.IsNullOrEmpty(dto.Vin)
+            IsVerified = isVerified,
+
+            IsPublished = false
         };
 
         if (dto.NewPhotos != null)
             await AddPhotos(userId, listing, dto.NewPhotos);
-
-        listing.IsPublished = false;
 
         await listings.AddAsync(listing);
         await unitOfWork.SaveChangesAsync();
@@ -174,8 +189,6 @@ public class ListingService(
             UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder,
             GearTypeId = request.GearTypeId,
             FuelTypeId = request.FuelTypeId,
-
-            // --- Pass VIN ---
             Vin = request.Vin
         };
 
@@ -221,20 +234,45 @@ public class ListingService(
         if (dto.CityId.HasValue) listing.CityId = dto.CityId;
         if (dto.Year.HasValue) listing.Year = dto.Year;
         if (dto.Mileage.HasValue) listing.Mileage = dto.Mileage;
-        if (dto.Number != null) listing.Number = dto.Number;
+
+        string? newVin = dto.Vin ?? listing.Vin;
+        string? newNumber = dto.Number ?? listing.Number;
+
+        bool checkNeeded = false;
+
+        if (dto.Number != null && dto.Number != listing.Number)
+        {
+            listing.Number = dto.Number;
+            checkNeeded = true;
+        }
+
+        if (dto.Vin != null && dto.Vin != listing.Vin)
+        {
+            ValidateVin(dto.Vin);
+            listing.Vin = dto.Vin;
+            checkNeeded = true;
+        }
+        if (checkNeeded)
+        {
+            string? identifier = !string.IsNullOrEmpty(listing.Vin) ? listing.Vin : listing.Number;
+
+            if (!string.IsNullOrEmpty(identifier))
+            {
+                var checkResult = await verificationService.CheckVehicleAsync(identifier);
+                listing.IsVerified = checkResult.IsFound;
+            }
+            else
+            {
+                listing.IsVerified = false;
+            }
+        }
+
         if (dto.ColorHex != null) listing.ColorHex = dto.ColorHex;
         if (dto.Price.HasValue) listing.Price = dto.Price;
         if (dto.Description != null) listing.Description = dto.Description;
         if (dto.HasAccident.HasValue) listing.HasAccident = dto.HasAccident.Value;
         if (dto.GearTypeId.HasValue) listing.GearTypeId = dto.GearTypeId;
         if (dto.FuelTypeId.HasValue) listing.FuelTypeId = dto.FuelTypeId;
-
-        if (dto.Vin != null)
-        {
-            ValidateVin(dto.Vin); 
-            listing.Vin = dto.Vin;
-            listing.IsVerified = !string.IsNullOrEmpty(dto.Vin);
-        }
 
         await UpdatePhotos(listing, userId, dto.NewPhotos, dto.PhotosToRemove, dto.UpdatedPhotoSortOrder);
     }
