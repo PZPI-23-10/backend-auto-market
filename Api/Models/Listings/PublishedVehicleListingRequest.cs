@@ -14,7 +14,9 @@ public class PublishedVehicleListingRequest
     [Required] [Range(1900, 2100)] public int Year { get; set; }
     [Required] [Range(0, int.MaxValue)] public int Mileage { get; set; }
     public string? Number { get; set; }
-
+    [MaxLength(17)]
+    [RegularExpression("^[A-HJ-NPR-Z0-9]{17}$", ErrorMessage = "Invalid VIN format")]
+    public string? Vin { get; set; }
     [Required]
     [RegularExpression("^#([A-Fa-f0-9]{6})$")]
     [MaxLength(7)]
