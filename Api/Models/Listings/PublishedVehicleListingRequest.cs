@@ -13,7 +13,7 @@ public class PublishedVehicleListingRequest
     [Required] public int CityId { get; set; }
     [Required] [Range(1900, 2100)] public int Year { get; set; }
     [Required] [Range(0, int.MaxValue)] public int Mileage { get; set; }
-    [Required] public string Number { get; set; }
+    public string? Number { get; set; }
 
     [Required]
     [RegularExpression("^#([A-Fa-f0-9]{6})$")]
