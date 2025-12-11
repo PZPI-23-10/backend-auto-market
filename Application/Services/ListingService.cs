@@ -40,7 +40,11 @@ public class ListingService(
             Number = dto.Number,
             GearTypeId = dto.GearTypeId,
             FuelTypeId = dto.FuelTypeId,
-            IsPublished = true
+            IsPublished = true,
+
+            // --- NEW: VIN Logic ---
+            Vin = dto.Vin,
+            IsVerified = IsVinValid(dto.Vin)
         };
 
         await listings.AddAsync(listing);
@@ -92,7 +96,11 @@ public class ListingService(
             Price = dto.Price,
             FuelTypeId = dto.FuelTypeId,
             GearTypeId = dto.GearTypeId,
-            Number = dto.Number
+            Number = dto.Number,
+
+            // --- NEW: VIN Logic ---
+            Vin = dto.Vin,
+            IsVerified = IsVinValid(dto.Vin)
         };
 
         if (dto.NewPhotos != null)
@@ -154,6 +162,9 @@ public class ListingService(
             UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder,
             GearTypeId = request.GearTypeId,
             FuelTypeId = request.FuelTypeId,
+
+            // --- NEW: Pass Vin from Publish command to Draft command logic ---
+            Vin = request.Vin
         };
 
         await ApplyDraft(userId, listing, draftCommand);
@@ -205,6 +216,12 @@ public class ListingService(
         if (dto.HasAccident.HasValue) listing.HasAccident = dto.HasAccident.Value;
         if (dto.GearTypeId.HasValue) listing.GearTypeId = dto.GearTypeId;
         if (dto.FuelTypeId.HasValue) listing.FuelTypeId = dto.FuelTypeId;
+
+        if (dto.Vin != null)
+        {
+            listing.Vin = dto.Vin;
+            listing.IsVerified = IsVinValid(dto.Vin);
+        }
 
         await UpdatePhotos(listing, userId, dto.NewPhotos, dto.PhotosToRemove, dto.UpdatedPhotoSortOrder);
     }
@@ -284,5 +301,10 @@ public class ListingService(
             throw new ValidationException("Listing does not belong to user");
 
         return listing;
+    }
+
+    private bool IsVinValid(string? vin)
+    {
+        return !string.IsNullOrWhiteSpace(vin) && vin.Length == 17;
     }
 }

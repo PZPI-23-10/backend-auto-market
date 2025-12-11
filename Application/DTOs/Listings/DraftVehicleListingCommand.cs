@@ -15,7 +15,7 @@ public class DraftVehicleListingCommand
     public decimal? Price { get; set; }
     public string? Description { get; set; }
     public bool? HasAccident { get; set; }
-
+    public string? Vin { get; set; }
     public IEnumerable<OrderedFileDto>? NewPhotos { get; set; }
     public IEnumerable<int>? PhotosToRemove { get; set; }
 

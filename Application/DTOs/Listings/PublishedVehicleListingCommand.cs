@@ -15,7 +15,7 @@ public class PublishedVehicleListingCommand
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
     public bool HasAccident { get; set; } = false;
-
+    public string? Vin { get; set; }
     public IEnumerable<OrderedFileDto>? NewPhotos { get; set; }
     public IEnumerable<int>? PhotosToRemove { get; set; }
     public IEnumerable<ListingPhotoSortOrder>? UpdatedPhotoSortOrder { get; set; }
