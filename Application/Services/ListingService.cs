@@ -6,7 +6,7 @@ using Application.Enums;
 using Application.Exceptions;
 using Application.Interfaces.Persistence;
 using Application.Interfaces.Persistence.Repositories;
-using Application.Interfaces.Services; 
+using Application.Interfaces.Services;
 using Domain.Entities;
 
 namespace Application.Services;
@@ -26,18 +26,21 @@ public class ListingService(
         if (!isValid)
             throw new ValidationException("Selected body type is not compatible with the chosen model.");
 
-        if (!string.IsNullOrEmpty(dto.Vin))
-        {
-            ValidateVin(dto.Vin);
-        }
-        bool isVerified = false;
+        if (!string.IsNullOrEmpty(dto.Vin)) ValidateVinFormat(dto.Vin);
 
         string? identifierToCheck = !string.IsNullOrEmpty(dto.Vin) ? dto.Vin : dto.Number;
 
-        if (!string.IsNullOrEmpty(identifierToCheck))
+        if (string.IsNullOrEmpty(identifierToCheck))
         {
-            var checkResult = await verificationService.CheckVehicleAsync(identifierToCheck);
-            isVerified = checkResult.IsFound;
+            throw new ValidationException("Вкажіть Держ. номер або VIN код.");
+        }
+
+        var checkResult = await verificationService.CheckVehicleAsync(identifierToCheck);
+
+        if (!checkResult.IsFound)
+        {
+            string idType = !string.IsNullOrEmpty(dto.Vin) ? "VIN код" : "Номер авто";
+            throw new ValidationException($"{idType} '{identifierToCheck}' не знайдено в офіційній базі даних. Створення неможливе.");
         }
 
         var listing = new VehicleListing
@@ -59,7 +62,7 @@ public class ListingService(
             Number = dto.Number,
             Vin = dto.Vin,
 
-            IsVerified = isVerified, 
+            IsVerified = true,
             IsPublished = true
         };
 
@@ -82,7 +85,6 @@ public class ListingService(
         }
 
         var listing = await GetUserListing(listingId, userId);
-
         await ApplyDraft(userId, listing, request);
         await unitOfWork.SaveChangesAsync();
     }
@@ -96,17 +98,17 @@ public class ListingService(
                 throw new ValidationException("Selected body type is not compatible with the chosen model.");
         }
 
-        if (!string.IsNullOrEmpty(dto.Vin))
-        {
-            ValidateVin(dto.Vin);
-        }
+        if (!string.IsNullOrEmpty(dto.Vin)) ValidateVinFormat(dto.Vin);
 
-        bool isVerified = false;
         string? identifierToCheck = !string.IsNullOrEmpty(dto.Vin) ? dto.Vin : dto.Number;
+
         if (!string.IsNullOrEmpty(identifierToCheck))
         {
             var checkResult = await verificationService.CheckVehicleAsync(identifierToCheck);
-            isVerified = checkResult.IsFound;
+            if (!checkResult.IsFound)
+            {
+                throw new ValidationException($"Дані авто '{identifierToCheck}' не підтверджено в базі. Чернетку не створено.");
+            }
         }
 
         var listing = new VehicleListing
@@ -124,11 +126,10 @@ public class ListingService(
             Price = dto.Price,
             FuelTypeId = dto.FuelTypeId,
             GearTypeId = dto.GearTypeId,
-
             Number = dto.Number,
             Vin = dto.Vin,
-            IsVerified = isVerified,
 
+            IsVerified = !string.IsNullOrEmpty(identifierToCheck), 
             IsPublished = false
         };
 
@@ -162,14 +163,16 @@ public class ListingService(
     public async Task PublishDraft(int userId, int listingId, PublishedVehicleListingCommand request)
     {
         bool isValid = await listings.IsBodyTypeValidForModel(request.ModelId, request.BodyTypeId);
-
-        if (!isValid)
-            throw new ValidationException("Selected body type is not compatible with the chosen model.");
+        if (!isValid) throw new ValidationException("Selected body type is not compatible with the chosen model.");
 
         var listing = await GetUserListing(listingId, userId);
+        if (listing.IsPublished) throw new ValidationException("Listing is already published");
 
-        if (listing.IsPublished)
-            throw new ValidationException("Listing is already published");
+        string? identifier = !string.IsNullOrEmpty(request.Vin) ? request.Vin : request.Number;
+        if (string.IsNullOrEmpty(identifier)) throw new ValidationException("Для публікації потрібен VIN або Номер.");
+
+        var check = await verificationService.CheckVehicleAsync(identifier);
+        if (!check.IsFound) throw new ValidationException($"Авто '{identifier}' не знайдено при спробі публікації.");
 
         var draftCommand = new DraftVehicleListingCommand
         {
@@ -195,6 +198,7 @@ public class ListingService(
         await ApplyDraft(userId, listing, draftCommand);
 
         listing.IsPublished = true;
+        listing.IsVerified = true;
         await unitOfWork.SaveChangesAsync();
     }
 
@@ -219,10 +223,7 @@ public class ListingService(
     public async Task<VehicleListingResponse> GetListingById(int id)
     {
         VehicleListing? listing = await listings.GetByIdAsync(id);
-
-        if (listing == null)
-            throw new NotFoundException("Listing not found");
-
+        if (listing == null) throw new NotFoundException("Listing not found");
         return VehicleListingMapper.ToResponseDto(listing);
     }
 
@@ -237,7 +238,6 @@ public class ListingService(
 
         string? newVin = dto.Vin ?? listing.Vin;
         string? newNumber = dto.Number ?? listing.Number;
-
         bool checkNeeded = false;
 
         if (dto.Number != null && dto.Number != listing.Number)
@@ -248,10 +248,11 @@ public class ListingService(
 
         if (dto.Vin != null && dto.Vin != listing.Vin)
         {
-            ValidateVin(dto.Vin);
+            ValidateVinFormat(dto.Vin);
             listing.Vin = dto.Vin;
             checkNeeded = true;
         }
+
         if (checkNeeded)
         {
             string? identifier = !string.IsNullOrEmpty(listing.Vin) ? listing.Vin : listing.Number;
@@ -259,7 +260,13 @@ public class ListingService(
             if (!string.IsNullOrEmpty(identifier))
             {
                 var checkResult = await verificationService.CheckVehicleAsync(identifier);
-                listing.IsVerified = checkResult.IsFound;
+
+                if (!checkResult.IsFound)
+                {
+                    throw new ValidationException($"Нові дані авто ({identifier}) не дійсні. Зміни відхилено.");
+                }
+
+                listing.IsVerified = true;
             }
             else
             {
@@ -284,29 +291,21 @@ public class ListingService(
         if (newPhotos != null) await AddPhotos(userId, listing, newPhotos);
         if (updatedPhotoSortOrder != null) await UpdateSortOrder(listing, updatedPhotoSortOrder);
 
-        listing.Photos = listing.Photos
-            .OrderBy(x => x.SortOrder)
-            .ThenBy(x => x.Id)
-            .ToList();
+        listing.Photos = listing.Photos.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToList();
     }
 
     private async Task AddPhotos(int userId, VehicleListing listing, IEnumerable<OrderedFileDto> photoDtos)
     {
         int availablePhotos = 10 - listing.Photos.Count;
-
-        if (availablePhotos <= 0)
-            throw new ValidationException("Maximum 10 photos are allowed");
+        if (availablePhotos <= 0) throw new ValidationException("Maximum 10 photos are allowed");
 
         foreach (var photoDto in photoDtos.Take(availablePhotos))
         {
             string hash = hashService.ComputeHash(photoDto.File.Stream);
-
-            if (listing.Photos.Any(x => x.Hash == hash))
-                continue;
+            if (listing.Photos.Any(x => x.Hash == hash)) continue;
 
             var uploadStrategy = uploadStrategyFactory.CreateFileUploadStrategy(PhotoCategory.Listing);
-            FileUploadResult uploadResult =
-                await fileStorage.Upload(uploadStrategy, photoDto.File.Stream, photoDto.File.Name, userId);
+            FileUploadResult uploadResult = await fileStorage.Upload(uploadStrategy, photoDto.File.Stream, photoDto.File.Name, userId);
 
             listing.Photos.Add(new VehiclePhoto
             {
@@ -324,9 +323,7 @@ public class ListingService(
         List<VehiclePhoto> toRemove = listing.Photos.Where(p => photosToRemove.Contains(p.Id)).ToList();
         foreach (var photo in toRemove)
         {
-            if (!string.IsNullOrEmpty(photo.PublicId))
-                await fileStorage.Delete(photo.PublicId);
-
+            if (!string.IsNullOrEmpty(photo.PublicId)) await fileStorage.Delete(photo.PublicId);
             listing.Photos.Remove(photo);
         }
     }
@@ -336,34 +333,22 @@ public class ListingService(
         foreach (var photo in updateSortOrder)
         {
             var listingPhoto = listing.Photos.FirstOrDefault(x => x.Id == photo.PhotoId);
-
-            if (listingPhoto != null)
-                listingPhoto.SortOrder = photo.SortOrder;
+            if (listingPhoto != null) listingPhoto.SortOrder = photo.SortOrder;
         }
     }
 
     private async Task<VehicleListing> GetUserListing(int listingId, int userId)
     {
         var listing = await listings.GetByIdAsync(listingId);
-        if (listing == null)
-            throw new NotFoundException("Listing not found");
-
-        if (listing.UserId != userId)
-            throw new ValidationException("Listing does not belong to user");
-
+        if (listing == null) throw new NotFoundException("Listing not found");
+        if (listing.UserId != userId) throw new ValidationException("Listing does not belong to user");
         return listing;
     }
 
-    private void ValidateVin(string? vin)
+    private void ValidateVinFormat(string vin)
     {
         if (string.IsNullOrWhiteSpace(vin)) return;
-
-        if (vin.Length != 17)
-            throw new ValidationException("VIN code must be exactly 17 characters long.");
-
-        if (!Regex.IsMatch(vin, "^[A-HJ-NPR-Z0-9]{17}$"))
-        {
-            throw new ValidationException("VIN contains invalid characters. Letters I, O, and Q are not allowed.");
-        }
+        if (vin.Length != 17) throw new ValidationException("VIN code must be exactly 17 characters long.");
+        if (!Regex.IsMatch(vin, "^[A-HJ-NPR-Z0-9]{17}$")) throw new ValidationException("VIN contains invalid characters. Letters I, O, and Q are not allowed.");
     }
 }
