@@ -10,7 +10,7 @@ public class PublishedVehicleListingCommand
     public int CityId { get; set; }
     public int Year { get; set; }
     public int Mileage { get; set; }
-    public string Number { get; set; }
+    public string? Number { get; set; }
     public string ColorHex { get; set; }
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
