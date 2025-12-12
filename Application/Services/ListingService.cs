@@ -37,11 +37,7 @@ public class ListingService(
 
         var checkResult = await verificationService.CheckVehicleAsync(identifierToCheck);
 
-        if (!checkResult.IsFound)
-        {
-            string idType = !string.IsNullOrEmpty(dto.Vin) ? "VIN код" : "Номер авто";
-            throw new ValidationException($"{idType} '{identifierToCheck}' не знайдено в офіційній базі даних. Створення неможливе.");
-        }
+        bool isVerified = checkResult.IsFound;
 
         var listing = new VehicleListing
         {
@@ -62,7 +58,7 @@ public class ListingService(
             Number = dto.Number,
             Vin = dto.Vin,
 
-            IsVerified = true,
+            IsVerified = isVerified,
             IsPublished = true
         };
 
@@ -102,13 +98,12 @@ public class ListingService(
 
         string? identifierToCheck = !string.IsNullOrEmpty(dto.Vin) ? dto.Vin : dto.Number;
 
+        bool isVerified = false;
+
         if (!string.IsNullOrEmpty(identifierToCheck))
         {
             var checkResult = await verificationService.CheckVehicleAsync(identifierToCheck);
-            if (!checkResult.IsFound)
-            {
-                throw new ValidationException($"Дані авто '{identifierToCheck}' не підтверджено в базі. Чернетку не створено.");
-            }
+            isVerified = checkResult.IsFound; 
         }
 
         var listing = new VehicleListing
@@ -129,7 +124,7 @@ public class ListingService(
             Number = dto.Number,
             Vin = dto.Vin,
 
-            IsVerified = !string.IsNullOrEmpty(identifierToCheck), 
+            IsVerified = isVerified, 
             IsPublished = false
         };
 
@@ -260,13 +255,8 @@ public class ListingService(
             if (!string.IsNullOrEmpty(identifier))
             {
                 var checkResult = await verificationService.CheckVehicleAsync(identifier);
-
-                if (!checkResult.IsFound)
-                {
-                    throw new ValidationException($"Нові дані авто ({identifier}) не дійсні. Зміни відхилено.");
-                }
-
-                listing.IsVerified = true;
+                
+                listing.IsVerified = checkResult.IsFound;
             }
             else
             {
