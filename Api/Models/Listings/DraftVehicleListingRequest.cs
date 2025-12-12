@@ -14,6 +14,7 @@ public class DraftVehicleListingRequest
     [Range(1900, 2100)] public int? Year { get; set; }
     [Range(0, int.MaxValue)] public int? Mileage { get; set; }
     public string? Number { get; set; }
+    public string? Vin { get; set; }
 
     [RegularExpression("^#([A-Fa-f0-9]{6})$")]
     [MaxLength(7)]
