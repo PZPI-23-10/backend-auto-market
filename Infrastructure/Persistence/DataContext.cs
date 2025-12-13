@@ -19,6 +19,7 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<User, Ide
     public DbSet<VehiclePhoto> VehiclePhotos { get; set; }
     public DbSet<VehicleCondition> VehicleConditions { get; set; }
     public DbSet<VehicleBodyType> BodyTypes { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
     public DbSet<VehicleModelBodyType> VehicleModelBodyTypes { get; set; }
 
     public DbSet<City> Cities { get; set; }
@@ -29,7 +30,7 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<User, Ide
         UpdateAuditableEntities();
         return base.SaveChangesAsync(cancellationToken);
     }
-    
+
     private void UpdateAuditableEntities()
     {
         var entries = ChangeTracker.Entries<IAuditableEntity>();
@@ -49,11 +50,11 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<User, Ide
             }
         }
     }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Email).IsUnique();
@@ -180,6 +181,22 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<User, Ide
             entity.HasMany(x => x.Models)
                 .WithOne(x => x.VehicleType)
                 .HasForeignKey(x => x.VehicleTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
+        modelBuilder.Entity<Chat>(e =>
+        {
+            e.HasKey(c => c.Id);
+
+            e.HasOne(c => c.FirstUser)
+                .WithMany()
+                .HasForeignKey(c => c.FirstUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(c => c.SecondUser)
+                .WithMany()
+                .HasForeignKey(c => c.SecondUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

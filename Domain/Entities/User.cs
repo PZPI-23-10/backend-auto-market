@@ -12,7 +12,10 @@ public class User : IdentityUser<int>, IAuditableEntity
     public DateTime? DateOfBirth { get; set; }
     public string? Address { get; set; }
     public bool IsGoogleAuth { get; set; }
-    public virtual ICollection<EmailVerificationCode> EmailVerificationCodes { get; set; } = new List<EmailVerificationCode>();
+
+    public virtual ICollection<EmailVerificationCode> EmailVerificationCodes { get; set; } =
+        new List<EmailVerificationCode>();
+
     public virtual ICollection<VehicleListing> VehicleListings { get; set; } = new List<VehicleListing>();
     public virtual UserAvatar? Avatar { get; set; }
     public DateTimeOffset Created { get; set; }
