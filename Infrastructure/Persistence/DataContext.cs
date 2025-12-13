@@ -22,6 +22,7 @@ public class DataContext(DbContextOptions options)
     public DbSet<VehicleCondition> VehicleConditions { get; set; }
     public DbSet<VehicleBodyType> BodyTypes { get; set; }
     public DbSet<ChatMessage> ChatMessages { get; set; }
+    public DbSet<Chat> Chats { get; set; }
     public DbSet<VehicleModelBodyType> VehicleModelBodyTypes { get; set; }
 
     public DbSet<City> Cities { get; set; }
