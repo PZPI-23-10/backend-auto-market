@@ -18,7 +18,7 @@ public static class PersistenceExtensions
     {
         string? connectionString = configuration.GetConnectionString("Database");
 
-        services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString)
+        services.AddDbContext<IDataContext, DataContext>(options => options.UseNpgsql(connectionString)
             .UseAsyncSeeding(DataSeeder.Seed)
             .UseSeeding((context, cancellationToken) =>
                 DataSeeder.Seed(context, cancellationToken)

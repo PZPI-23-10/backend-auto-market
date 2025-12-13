@@ -1,11 +1,13 @@
-﻿using Domain.Entities;
+﻿using Application.Interfaces.Persistence;
+using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence;
 
-public class DataContext(DbContextOptions options) : IdentityDbContext<User, IdentityRole<int>, int>(options)
+public class DataContext(DbContextOptions options)
+    : IdentityDbContext<User, IdentityRole<int>, int>(options), IDataContext
 {
     public DbSet<UserAvatar> UserAvatars { get; set; }
     public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
