@@ -1,4 +1,5 @@
 using Api.Extensions;
+using Api.Hubs;
 using Application.Extensions;
 using Application.Interfaces.Persistence;
 using Application.Validation;
@@ -7,8 +8,6 @@ using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
-
-// ����� ��� HttpClientHandler
 
 namespace Api;
 
@@ -32,6 +31,8 @@ public static class Program
             .AddRoles<IdentityRole<int>>()
             .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<DataContext>();
+
+        builder.Services.AddSignalR();
 
         builder.Services.AddApiControllers();
 
@@ -91,6 +92,8 @@ public static class Program
 
         app.UseErrorHandler();
         app.MapControllers();
+
+        app.MapHub<ChatHub>("/hubs/chat");
 
         await app.RunAsync();
     }

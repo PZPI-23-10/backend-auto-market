@@ -12,6 +12,7 @@ public static class ServicesExtensions
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IVerificationService, VerificationService>();
         services.AddScoped<IListingService, ListingService>();
+        services.AddScoped<IChatService, ChatService>();
 
         return services;
     }
