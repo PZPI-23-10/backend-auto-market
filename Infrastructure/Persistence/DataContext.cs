@@ -201,5 +201,21 @@ public class DataContext(DbContextOptions options)
                 .HasForeignKey(c => c.SecondUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<ChatMessage>(e =>
+        {
+            e.HasOne(m => m.Chat)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ChatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.Property(m => m.Text).IsRequired().HasMaxLength(2000);
+            e.Property(m => m.Created).IsRequired();
+        });
     }
 }
