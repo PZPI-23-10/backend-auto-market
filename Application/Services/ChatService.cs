@@ -38,17 +38,19 @@ public class ChatService(IDataContext dataContext) : IChatService
             ChatId = chatId,
             SenderId = senderId,
             Text = text,
+            IsRead = false
         };
 
         dataContext.ChatMessages.Add(message);
         await dataContext.SaveChangesAsync();
 
-        return new ChatMessageDto()
+        return new ChatMessageDto
         {
             Id = message.Id,
             SenderId = message.SenderId,
             Text = message.Text,
-            SentAt = message.Created
+            SentAt = message.Created,
+            IsRead = message.IsRead
         };
     }
 
@@ -59,12 +61,13 @@ public class ChatService(IDataContext dataContext) : IChatService
             .OrderBy(m => m.Created)
             .ToListAsync();
 
-        return chatMessages.Select(m => new ChatMessageDto()
+        return chatMessages.Select(message => new ChatMessageDto
         {
-            Id = m.Id,
-            SenderId = m.SenderId,
-            Text = m.Text,
-            SentAt = m.Created
+            Id = message.Id,
+            SenderId = message.SenderId,
+            Text = message.Text,
+            SentAt = message.Created,
+            IsRead = message.IsRead
         });
     }
 
@@ -91,7 +94,7 @@ public class ChatService(IDataContext dataContext) : IChatService
 
         await dataContext.SaveChangesAsync();
     }
-    
+
     public async Task<int> GetUnreadCountAsync(int chatId, int userId)
     {
         return await dataContext.ChatMessages.CountAsync(m =>
@@ -110,14 +113,15 @@ public class ChatService(IDataContext dataContext) : IChatService
             CreatedAt = chat.Created,
             Messages = chat.Messages
                 .OrderBy(m => m.Created)
-                .Select(m => new ChatMessageDto
+                .Select(message => new ChatMessageDto
                 {
-                    Id = m.Id,
-                    SenderId = m.SenderId,
-                    Text = m.Text,
-                    SentAt = m.Created
+                    Id = message.Id,
+                    SenderId = message.SenderId,
+                    Text = message.Text,
+                    SentAt = message.Created,
+                    IsRead = message.IsRead
                 })
-                .ToList()
+                .ToList(),
         };
     }
 }
