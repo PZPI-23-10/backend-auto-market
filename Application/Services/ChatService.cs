@@ -11,7 +11,6 @@ public class ChatService(IDataContext dataContext) : IChatService
     public async Task<ChatDto> GetOrCreateChatAsync(int userA, int userB)
     {
         var chat = await dataContext.Chats
-            .Include(c => c.Messages)
             .FirstOrDefaultAsync(c =>
                 (c.FirstUserId == userA && c.SecondUserId == userB) ||
                 (c.FirstUserId == userB && c.SecondUserId == userA));
@@ -23,7 +22,6 @@ public class ChatService(IDataContext dataContext) : IChatService
                 FirstUserId = userA,
                 SecondUserId = userB,
                 Messages = new List<ChatMessage>(),
-                Created = DateTimeOffset.UtcNow 
             };
 
             dataContext.Chats.Add(chat);
@@ -41,7 +39,6 @@ public class ChatService(IDataContext dataContext) : IChatService
             SenderId = senderId,
             Text = text,
             IsRead = false,
-            Created = DateTimeOffset.UtcNow 
         };
 
         dataContext.ChatMessages.Add(message);
@@ -77,7 +74,6 @@ public class ChatService(IDataContext dataContext) : IChatService
     public async Task<IEnumerable<ChatDto>> GetUserChatsAsync(int userId)
     {
         var chats = await dataContext.Chats
-            .Include(c => c.Messages)
             .Where(c => c.FirstUserId == userId || c.SecondUserId == userId)
             .ToListAsync();
 
