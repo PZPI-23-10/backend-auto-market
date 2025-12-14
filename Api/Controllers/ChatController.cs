@@ -20,19 +20,27 @@ public class ChatController(IChatService chatService) : ControllerBase
         return Ok(chats);
     }
 
-    [HttpGet("{chatId}/history")]
+    [HttpGet("{chatId:int}/history")]
     public async Task<ActionResult<ChatMessageDto>> GetHistory(int chatId)
     {
         var messages = await chatService.GetHistoryAsync(chatId);
         return Ok(messages);
     }
 
-    [HttpPost("with/{otherUserId}")]
+    [HttpPost("with/{otherUserId:int}")]
     public async Task<ActionResult<ChatDto>> GetOrCreateChat(int otherUserId)
     {
         int userId = User.GetUserId();
 
         var chat = await chatService.GetOrCreateChatAsync(userId, otherUserId);
         return Ok(chat);
+    }
+
+    [HttpGet("{chatId:int}/unreadCount")]
+    public async Task<ActionResult<int>> Unread(int chatId)
+    {
+        int userId = User.GetUserId();
+
+        return Ok(await chatService.GetUnreadCountAsync(chatId, userId));
     }
 }

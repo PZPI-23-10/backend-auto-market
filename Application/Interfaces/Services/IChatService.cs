@@ -8,4 +8,6 @@ public interface IChatService
     Task<ChatMessageDto> SendMessageAsync(int chatId, int senderId, string text);
     Task<IEnumerable<ChatMessageDto>> GetHistoryAsync(int chatId);
     Task<IEnumerable<ChatDto>> GetUserChatsAsync(int userId);
+    Task MarkChatAsReadAsync(int chatId, int readerId);
+    Task<int> GetUnreadCountAsync(int chatId, int userId);
 }

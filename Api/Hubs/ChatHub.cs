@@ -22,4 +22,14 @@ public class ChatHub(IChatService chatService) : Hub
 
         await Clients.Group(chatId.ToString()).SendAsync("ReceiveMessage", messageDto);
     }
+
+    public async Task MarkAsRead(int chatId)
+    {
+        int readerId = Context.User.GetUserId();
+
+        await chatService.MarkChatAsReadAsync(chatId, readerId);
+
+        await Clients.Group(chatId.ToString())
+            .SendAsync("MessagesRead", chatId);
+    }
 }

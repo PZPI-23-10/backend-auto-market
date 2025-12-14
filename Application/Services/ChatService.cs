@@ -77,6 +77,29 @@ public class ChatService(IDataContext dataContext) : IChatService
         return chats.Select(ToDto);
     }
 
+    public async Task MarkChatAsReadAsync(int chatId, int readerId)
+    {
+        var unread = await dataContext.ChatMessages
+            .Where(message =>
+                message.ChatId == chatId &&
+                message.SenderId != readerId &&
+                !message.IsRead)
+            .ToListAsync();
+
+        foreach (var msg in unread)
+            msg.IsRead = true;
+
+        await dataContext.SaveChangesAsync();
+    }
+    
+    public async Task<int> GetUnreadCountAsync(int chatId, int userId)
+    {
+        return await dataContext.ChatMessages.CountAsync(m =>
+            m.ChatId == chatId &&
+            m.SenderId != userId &&
+            !m.IsRead);
+    }
+
     private ChatDto ToDto(Chat chat)
     {
         return new ChatDto
