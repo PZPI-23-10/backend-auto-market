@@ -11,6 +11,7 @@ public class ChatService(IDataContext dataContext) : IChatService
     public async Task<ChatDto> GetOrCreateChatAsync(int userA, int userB)
     {
         var chat = await dataContext.Chats
+            .Include(c => c.Messages)
             .FirstOrDefaultAsync(c =>
                 (c.FirstUserId == userA && c.SecondUserId == userB) ||
                 (c.FirstUserId == userB && c.SecondUserId == userA));
@@ -21,7 +22,8 @@ public class ChatService(IDataContext dataContext) : IChatService
             {
                 FirstUserId = userA,
                 SecondUserId = userB,
-                Messages = new List<ChatMessage>()
+                Messages = new List<ChatMessage>(),
+                Created = DateTimeOffset.UtcNow 
             };
 
             dataContext.Chats.Add(chat);
@@ -38,7 +40,8 @@ public class ChatService(IDataContext dataContext) : IChatService
             ChatId = chatId,
             SenderId = senderId,
             Text = text,
-            IsRead = false
+            IsRead = false,
+            Created = DateTimeOffset.UtcNow 
         };
 
         dataContext.ChatMessages.Add(message);
@@ -74,6 +77,7 @@ public class ChatService(IDataContext dataContext) : IChatService
     public async Task<IEnumerable<ChatDto>> GetUserChatsAsync(int userId)
     {
         var chats = await dataContext.Chats
+            .Include(c => c.Messages)
             .Where(c => c.FirstUserId == userId || c.SecondUserId == userId)
             .ToListAsync();
 
@@ -89,10 +93,13 @@ public class ChatService(IDataContext dataContext) : IChatService
                 !message.IsRead)
             .ToListAsync();
 
-        foreach (var msg in unread)
-            msg.IsRead = true;
+        if (unread.Any())
+        {
+            foreach (var msg in unread)
+                msg.IsRead = true;
 
-        await dataContext.SaveChangesAsync();
+            await dataContext.SaveChangesAsync();
+        }
     }
 
     public async Task<int> GetUnreadCountAsync(int chatId, int userId)
@@ -111,7 +118,7 @@ public class ChatService(IDataContext dataContext) : IChatService
             FirstUserId = chat.FirstUserId,
             SecondUserId = chat.SecondUserId,
             CreatedAt = chat.Created,
-            Messages = chat.Messages
+            Messages = chat.Messages?
                 .OrderBy(m => m.Created)
                 .Select(message => new ChatMessageDto
                 {
@@ -121,7 +128,7 @@ public class ChatService(IDataContext dataContext) : IChatService
                     SentAt = message.Created,
                     IsRead = message.IsRead
                 })
-                .ToList(),
+                .ToList() ?? new List<ChatMessageDto>() 
         };
     }
 }
