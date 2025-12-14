@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Services;
+﻿using Api.Extensions;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -15,7 +16,7 @@ public class ChatHub(IChatService chatService) : Hub
 
     public async Task SendMessage(int chatId, string text)
     {
-        int senderId = int.Parse(Context.UserIdentifier);
+        int senderId = Context.User.GetUserId();
 
         var messageDto = await chatService.SendMessageAsync(chatId, senderId, text);
 
