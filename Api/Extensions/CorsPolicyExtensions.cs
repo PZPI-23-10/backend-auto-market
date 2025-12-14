@@ -11,7 +11,9 @@ public static class CorsPolicyExtensions
                     "http://localhost:5173"
                 )
                 .AllowAnyMethod()
-                .AllowAnyHeader());
+                .AllowAnyHeader()
+                .AllowCredentials()
+            );
         });
 
         return services;
