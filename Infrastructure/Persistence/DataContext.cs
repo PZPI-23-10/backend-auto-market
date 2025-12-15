@@ -15,7 +15,6 @@ public class DataContext(DbContextOptions options)
     public DbSet<VehicleType> VehicleTypes { get; set; }
     public DbSet<GearType> GearTypes { get; set; }
     public DbSet<FuelType> FuelTypes { get; set; }
-    public DbSet<FavouriteVehicle> FavouriteVehicles { get; set; }
     public DbSet<VehicleListing> VehicleListings { get; set; }
     public DbSet<VehicleBrand> VehicleBrands { get; set; }
     public DbSet<VehicleModel> VehicleModels { get; set; }
@@ -23,11 +22,13 @@ public class DataContext(DbContextOptions options)
     public DbSet<VehicleCondition> VehicleConditions { get; set; }
     public DbSet<VehicleBodyType> BodyTypes { get; set; }
     public DbSet<ChatMessage> ChatMessages { get; set; }
+    public DbSet<ChatMessageRead> ChatMessageReads { get; set; }
     public DbSet<Chat> Chats { get; set; }
     public DbSet<VehicleModelBodyType> VehicleModelBodyTypes { get; set; }
 
     public DbSet<City> Cities { get; set; }
     public DbSet<Region> Regions { get; set; }
+    public DbSet<FavouriteVehicle> FavouriteVehicles { get; set; }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -216,20 +217,16 @@ public class DataContext(DbContextOptions options)
                 .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            e.HasMany(m => m.Reads)
+                .WithOne(x => x.Message)
+                .HasForeignKey(r => r.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             e.Property(m => m.Text).IsRequired().HasMaxLength(2000);
             e.Property(m => m.Created).IsRequired();
         });
-        
-        modelBuilder.Entity<FavouriteVehicle>()
-            .HasOne(favouriteItem => favouriteItem.FavVehicleListing)
-            .WithMany()
-            .HasForeignKey(favouriteItem => favouriteItem.VehicleListingId)
-            .OnDelete(DeleteBehavior.Cascade);
-        
-        modelBuilder.Entity<FavouriteVehicle>()
-            .HasOne(favouriteItem => favouriteItem.User)
-            .WithMany(client => client.FavouriteVehicles)
-            .HasForeignKey(favouriteItem => favouriteItem.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ChatMessageRead>()
+            .HasKey(r => new { r.MessageId, r.UserId });
     }
 }

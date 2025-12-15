@@ -20,6 +20,7 @@ public interface IDataContext : IAsyncDisposable
     DbSet<VehicleCondition> VehicleConditions { get; set; }
     DbSet<VehicleBodyType> BodyTypes { get; set; }
     DbSet<ChatMessage> ChatMessages { get; set; }
+    DbSet<ChatMessageRead> ChatMessageReads { get; set; }
     DbSet<Chat> Chats { get; set; }
     DbSet<VehicleModelBodyType> VehicleModelBodyTypes { get; set; }
     DbSet<City> Cities { get; set; }
