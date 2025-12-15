@@ -18,9 +18,10 @@ public class ProfileService(
     IUnitOfWork unitOfWork,
     IFileUploadStrategyFactory uploadStrategyFactory,
     IFileHashService hashService,
+    IDataContext context,
     UserManager<User> userManager) : IProfileService
 {
-    private readonly IDataContext _context;
+    private readonly IDataContext _context = context;
     public async Task<UserProfileResponse> GetUser(int userId)
     {
         User? user = await users.GetByIdAsync(userId);
