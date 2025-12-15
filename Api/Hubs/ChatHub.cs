@@ -30,6 +30,6 @@ public class ChatHub(IChatService chatService) : Hub
         await chatService.MarkChatAsReadAsync(chatId, readerId);
 
         await Clients.Group(chatId.ToString())
-            .SendAsync("MessagesRead", chatId);
+            .SendAsync("MessagesRead", chatId, readerId);
     }
 }
