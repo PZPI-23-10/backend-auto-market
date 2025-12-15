@@ -16,6 +16,8 @@ public class DraftVehicleListingCommand
     public string? Description { get; set; }
     public bool? HasAccident { get; set; }
     public string? Vin { get; set; }
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
     public IEnumerable<OrderedFileDto>? NewPhotos { get; set; }
     public IEnumerable<int>? PhotosToRemove { get; set; }
 

@@ -54,7 +54,9 @@ public class ListingService(
             Price = dto.Price,
             GearTypeId = dto.GearTypeId,
             FuelTypeId = dto.FuelTypeId,
-
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude,
+            
             Number = dto.Number,
             Vin = dto.Vin,
 
@@ -123,7 +125,9 @@ public class ListingService(
             GearTypeId = dto.GearTypeId,
             Number = dto.Number,
             Vin = dto.Vin,
-
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude,
+            
             IsVerified = isVerified, 
             IsPublished = false
         };
@@ -187,7 +191,9 @@ public class ListingService(
             UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder,
             GearTypeId = request.GearTypeId,
             FuelTypeId = request.FuelTypeId,
-            Vin = request.Vin
+            Vin = request.Vin,
+            Latitude = request.Latitude,
+            Longitude = request.Longitude
         };
 
         await ApplyDraft(userId, listing, draftCommand);
