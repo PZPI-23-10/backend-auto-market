@@ -19,19 +19,23 @@ public class ChatService(IDataContext dataContext) : IChatService
         return chats.Select(c => ToDto(c, userId));
     }
 
-    public async Task<IEnumerable<ChatMessageDto>> GetHistoryAsync(int chatId)
+    public async Task<IEnumerable<ChatMessageDto>> GetHistoryAsync(int chatId, int currentUserId)
     {
-        var chatMessages = await dataContext.ChatMessages
+        var messages = await dataContext.ChatMessages
+            .Include(m => m.Reads)
             .Where(m => m.ChatId == chatId)
             .OrderBy(m => m.Created)
             .ToListAsync();
 
-        return chatMessages.Select(message => new ChatMessageDto
+        return messages.Select(m => new ChatMessageDto
         {
-            Id = message.Id,
-            SenderId = message.SenderId,
-            Text = message.Text,
-            SentAt = message.Created,
+            Id = m.Id,
+            SenderId = m.SenderId,
+            Text = m.Text,
+            SentAt = m.Created,
+            IsRead = m.SenderId == currentUserId
+                ? m.Reads.Any(r => r.UserId != currentUserId)
+                : m.Reads.Any(r => r.UserId == currentUserId)
         });
     }
 
@@ -82,45 +86,25 @@ public class ChatService(IDataContext dataContext) : IChatService
         };
     }
 
-    public async Task<IEnumerable<ChatMessageDto>> GetHistoryAsync(int chatId, int currentUserId)
-    {
-        var messages = await dataContext.ChatMessages
-            .Include(m => m.Reads.Where(r => r.UserId == currentUserId))
-            .Where(m => m.ChatId == chatId)
-            .OrderBy(m => m.Created)
-            .ToListAsync();
-
-        return messages.Select(m => new ChatMessageDto
-        {
-            Id = m.Id,
-            SenderId = m.SenderId,
-            Text = m.Text,
-            SentAt = m.Created,
-            IsRead = m.Reads.Count != 0
-        });
-    }
-
     public async Task MarkChatAsReadAsync(int chatId, int readerId)
     {
         var unreadMessageIds = await dataContext.ChatMessages
-            .Where(m => m.ChatId == chatId && m.SenderId != readerId)
+            .Where(m => m.ChatId == chatId &&
+                        m.SenderId != readerId && m.Reads.All(r => r.UserId != readerId))
             .Select(m => m.Id)
             .ToListAsync();
 
-        var alreadyRead = await dataContext.ChatMessageReads
-            .Where(r => r.UserId == readerId && unreadMessageIds.Contains(r.MessageId))
-            .Select(r => r.MessageId)
-            .ToListAsync();
+        if (unreadMessageIds.Count == 0)
+            return;
 
-        var newReads = unreadMessageIds
-            .Except(alreadyRead)
-            .Select(id => new ChatMessageRead
-            {
-                MessageId = id,
-                UserId = readerId
-            });
+        var readEntries = unreadMessageIds.Select(id => new ChatMessageRead
+        {
+            MessageId = id,
+            UserId = readerId,
+            ReadAt = DateTime.UtcNow
+        });
 
-        dataContext.ChatMessageReads.AddRange(newReads);
+        await dataContext.ChatMessageReads.AddRangeAsync(readEntries);
         await dataContext.SaveChangesAsync();
     }
 
@@ -161,7 +145,9 @@ public class ChatService(IDataContext dataContext) : IChatService
                     SenderId = message.SenderId,
                     Text = message.Text,
                     SentAt = message.Created,
-                    IsRead = message.Reads.Any(r => r.UserId == userId)
+                    IsRead = message.SenderId == userId
+                        ? message.Reads.Any(r => r.UserId != userId)
+                        : message.Reads.Any(r => r.UserId == userId)
                 })
                 .ToList() ?? []
         };

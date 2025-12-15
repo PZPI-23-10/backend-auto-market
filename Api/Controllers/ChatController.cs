@@ -23,7 +23,8 @@ public class ChatController(IChatService chatService) : ControllerBase
     [HttpGet("{chatId:int}/history")]
     public async Task<ActionResult<ChatMessageDto>> GetHistory(int chatId)
     {
-        var messages = await chatService.GetHistoryAsync(chatId);
+        int userId = User.GetUserId();
+        var messages = await chatService.GetHistoryAsync(chatId, userId);
         return Ok(messages);
     }
 
