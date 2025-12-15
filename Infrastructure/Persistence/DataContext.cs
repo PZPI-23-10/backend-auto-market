@@ -15,6 +15,7 @@ public class DataContext(DbContextOptions options)
     public DbSet<VehicleType> VehicleTypes { get; set; }
     public DbSet<GearType> GearTypes { get; set; }
     public DbSet<FuelType> FuelTypes { get; set; }
+    public DbSet<FavouriteVehicle> FavouriteVehicles { get; set; }
     public DbSet<VehicleListing> VehicleListings { get; set; }
     public DbSet<VehicleBrand> VehicleBrands { get; set; }
     public DbSet<VehicleModel> VehicleModels { get; set; }
@@ -218,5 +219,17 @@ public class DataContext(DbContextOptions options)
             e.Property(m => m.Text).IsRequired().HasMaxLength(2000);
             e.Property(m => m.Created).IsRequired();
         });
+        
+        modelBuilder.Entity<FavouriteVehicle>()
+            .HasOne(favouriteItem => favouriteItem.FavVehicleListing)
+            .WithMany()
+            .HasForeignKey(favouriteItem => favouriteItem.VehicleListingId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<FavouriteVehicle>()
+            .HasOne(favouriteItem => favouriteItem.User)
+            .WithMany(client => client.FavouriteVehicles)
+            .HasForeignKey(favouriteItem => favouriteItem.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

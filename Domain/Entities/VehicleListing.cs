@@ -37,5 +37,7 @@ public class VehicleListing : BaseAuditableEntity
     public bool IsPublished { get; set; } = false;
     public string? Vin { get; set; }
     public bool IsVerified { get; set; } = false;
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
     public virtual ICollection<VehiclePhoto> Photos { get; set; } = new List<VehiclePhoto>();
 }
