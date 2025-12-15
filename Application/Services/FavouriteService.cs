@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
 
-public class FavouriteService() : IFavouriteService
+public class FavouriteService(IDataContext context) : IFavouriteService
 {
-    private readonly IDataContext _context;
+    private readonly IDataContext _context = context;
 
     public async Task<bool> AddToFavouritesAsync(int userId, int vehicleListingId)
     {
