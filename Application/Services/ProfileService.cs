@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Application.DTOs.Listings;
 using Application.DTOs.Profile;
 using Application.Enums;
 using Application.Exceptions;
@@ -7,6 +8,7 @@ using Application.Interfaces.Persistence.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
 
@@ -18,6 +20,7 @@ public class ProfileService(
     IFileHashService hashService,
     UserManager<User> userManager) : IProfileService
 {
+    private readonly IDataContext _context;
     public async Task<UserProfileResponse> GetUser(int userId)
     {
         User? user = await users.GetByIdAsync(userId);
@@ -26,6 +29,15 @@ public class ProfileService(
             throw new ApplicationException("User not found");
 
         IEnumerable<string> userRoles = await userManager.GetRolesAsync(user);
+        
+        var favouriteVehicles = await _context.FavouriteVehicles
+            .AsNoTracking() 
+            .Where(f => f.UserId == userId)
+            .Select(f => new VehicleShortDto
+            {
+                Id = f.FavVehicleListing.Id,
+            })
+            .ToListAsync();
         
         return new UserProfileResponse
         {
@@ -43,6 +55,7 @@ public class ProfileService(
             IsGoogleAuth = user.IsGoogleAuth,
             AvatarUrl = user.Avatar?.Url,
             Roles = userRoles,
+            FavouriteVehicles = favouriteVehicles
         };
     }
 

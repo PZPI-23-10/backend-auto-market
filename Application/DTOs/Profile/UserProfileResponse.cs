@@ -1,4 +1,6 @@
-﻿namespace Application.DTOs.Profile;
+﻿using Application.DTOs.Listings;
+
+namespace Application.DTOs.Profile;
 
 public class UserProfileResponse
 {
@@ -16,4 +18,5 @@ public class UserProfileResponse
     public bool? IsVerified { get; set; }
     public string? AvatarUrl { get; set; }
     public IEnumerable<string>? Roles { get; set; }
+    public IEnumerable<VehicleShortDto> FavouriteVehicles { get; set; } = new List<VehicleShortDto>();
 }
