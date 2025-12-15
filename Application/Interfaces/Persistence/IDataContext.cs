@@ -25,6 +25,7 @@ public interface IDataContext : IAsyncDisposable
     DbSet<City> Cities { get; set; }
     DbSet<Region> Regions { get; set; }
     DbSet<User> Users { get; set; }
+    DbSet<FavouriteVehicle> FavouriteVehicles { get; }
     DbSet<IdentityUserClaim<int>> UserClaims { get; set; }
     DbSet<IdentityUserLogin<int>> UserLogins { get; set; }
     DbSet<IdentityUserToken<int>> UserTokens { get; set; }

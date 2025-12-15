@@ -2,6 +2,8 @@ using Api.Extensions;
 using Api.Hubs;
 using Application.Extensions;
 using Application.Interfaces.Persistence;
+using Application.Interfaces.Services;
+using Application.Services;
 using Application.Validation;
 using Domain.Entities;
 using FluentValidation;
@@ -35,7 +37,7 @@ public static class Program
         builder.Services.AddSignalR();
 
         builder.Services.AddApiControllers();
-
+        builder.Services.AddScoped<IFavouriteService, FavouriteService>();
         builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserRequestValidator).Assembly);
 
         builder.Services.AddEndpointsApiExplorer();
