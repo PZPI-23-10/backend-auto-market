@@ -16,6 +16,8 @@ public class PublishedVehicleListingCommand
     public string Description { get; set; } = string.Empty;
     public bool HasAccident { get; set; } = false;
     public string? Vin { get; set; }
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
     public IEnumerable<OrderedFileDto>? NewPhotos { get; set; }
     public IEnumerable<int>? PhotosToRemove { get; set; }
     public IEnumerable<ListingPhotoSortOrder>? UpdatedPhotoSortOrder { get; set; }
