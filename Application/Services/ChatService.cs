@@ -13,7 +13,7 @@ public class ChatService(IDataContext dataContext) : IChatService
         var chats = await dataContext.Chats
             .Where(c => c.FirstUserId == userId || c.SecondUserId == userId)
             .Include(c => c.Messages)
-            .ThenInclude(m => m.Reads.Where(r => r.UserId == userId))
+            .ThenInclude(m => m.Reads)
             .ToListAsync();
 
         return chats.Select(c => ToDto(c, userId));
@@ -113,7 +113,8 @@ public class ChatService(IDataContext dataContext) : IChatService
         return await dataContext.ChatMessages
             .Where(m =>
                 m.ChatId == chatId &&
-                m.SenderId != userId && m.Reads.All(r => r.UserId != userId))
+                m.SenderId != userId &&
+                m.Reads.All(r => r.UserId != userId))
             .CountAsync();
     }
 
