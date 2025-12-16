@@ -48,6 +48,8 @@ public static class VehicleListingMapper
             Price = entity.Price ?? 0,
             Number = entity.Number ?? "",
             IsPublished = entity.IsPublished,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
             Vin = entity.Vin,
             IsVerified = entity.IsVerified,
             PhotoUrls = entity.Photos.Select(p => new PhotoResponse

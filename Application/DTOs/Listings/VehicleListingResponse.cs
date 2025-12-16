@@ -25,6 +25,8 @@ public class VehicleListingResponse
     public string? Number { get; init; }
     public bool IsPublished { get; init; }
     public string? Vin { get; init; }
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
     public bool IsVerified { get; init; }
     public IEnumerable<PhotoResponse> PhotoUrls { get; init; } = [];
     public DateTime CreatedAt { get; init; }
