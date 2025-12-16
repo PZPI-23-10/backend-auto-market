@@ -129,7 +129,9 @@ public class ListingController(IListingService listingService) : ControllerBase
             HasAccident = request.HasAccident,
             PhotosToRemove = request.PhotosToRemove,
             NewPhotos = newPhotos,
-            UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder
+            UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder,
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
         };
     }
 
@@ -160,7 +162,9 @@ public class ListingController(IListingService listingService) : ControllerBase
             HasAccident = request.HasAccident,
             NewPhotos = newPhotos,
             PhotosToRemove = request.PhotosToRemove,
-            UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder
+            UpdatedPhotoSortOrder = request.UpdatedPhotoSortOrder,
+            Latitude = request.Latitude,
+            Longitude = request.Longitude
         };
     }
 }

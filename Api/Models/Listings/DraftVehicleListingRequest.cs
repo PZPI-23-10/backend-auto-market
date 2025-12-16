@@ -24,6 +24,8 @@ public class DraftVehicleListingRequest
     [MaxLength(2000)] public string? Description { get; set; }
     public bool? HasAccident { get; set; }
 
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
     public int[]? PhotosToRemove { get; set; }
     public OrderedFileRequest[]? NewPhotos { get; set; }
     public ListingPhotoSortOrder[]? UpdatedPhotoSortOrder { get; set; }
