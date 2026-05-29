@@ -10,6 +10,7 @@ using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api;
 
@@ -95,7 +96,7 @@ public static class Program
 
         await using AsyncServiceScope serviceScope = app.Services.CreateAsyncScope();
         await using IDataContext dataContext = serviceScope.ServiceProvider.GetRequiredService<IDataContext>();
-        await dataContext.Database.EnsureCreatedAsync();
+        await dataContext.Database.MigrateAsync();
 
         await app.Services.SeedIdentity();
 
