@@ -72,9 +72,25 @@ public static class Program
         builder.Services
             .AddScoped<Application.Interfaces.Services.IVehicleVerificationService,
                 Infrastructure.Services.VehicleVerificationService>();
-        builder.Services.ConfigureCorsPolicy();
-        builder.Services.AddMemoryCache();
 
+        builder.Services.AddMemoryCache();
+        // Закомментировали старый метод
+        // builder.Services.ConfigureCorsPolicy();
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy => // Используем DefaultPolicy, так как ниже просто app.UseCors()
+            {
+                policy.WithOrigins(
+                        "http://localhost:5173",
+                        "http://localhost:8080",
+                        "https://automarket-app-2-lrutl.ondigitalocean.app" // Ваш живой сайт!
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials(); // Добавил AllowCredentials на всякий случай для SignalR
+            });
+        });
         WebApplication app = builder.Build();
 
         await using AsyncServiceScope serviceScope = app.Services.CreateAsyncScope();
