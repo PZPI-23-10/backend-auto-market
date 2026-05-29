@@ -8,9 +8,16 @@ namespace Infrastructure.Persistence.Repositories;
 public class VehicleListingRepository(DataContext context)
     : BaseRepository<VehicleListing>(context), IVehicleListingRepository
 {
+    public override async Task<VehicleListing?> GetByIdAsync(int? id)
+    {
+        return await WithListingDetails(DataContext.VehicleListings)
+            .FirstOrDefaultAsync(l => l.Id == id);
+    }
+
     public async Task<List<VehicleListing>> GetPublishedListingsAsync(VehicleListingFilter? filter = null)
     {
-        IQueryable<VehicleListing> query = DataContext.VehicleListings
+        IQueryable<VehicleListing> query = WithListingDetails(DataContext.VehicleListings)
+            .AsNoTracking()
             .Where(l => l.IsPublished);
 
         if (filter != null)
@@ -61,13 +68,17 @@ public class VehicleListingRepository(DataContext context)
                 query = query.Where(v => v.HasAccident == filter.HasAccident.Value);
         }
 
-        return await query.ToListAsync();
+        return await query
+            .AsSplitQuery()
+            .ToListAsync();
     }
 
     public async Task<List<VehicleListing>> GetUserListingsAsync(int userId)
     {
-        var listings = await DataContext.VehicleListings
+        var listings = await WithListingDetails(DataContext.VehicleListings)
+            .AsNoTracking()
             .Where(l => l.UserId == userId)
+            .AsSplitQuery()
             .ToListAsync();
 
         return listings;
@@ -75,7 +86,23 @@ public class VehicleListingRepository(DataContext context)
 
     public async Task<bool> IsBodyTypeValidForModel(int modelId, int bodyTypeId)
     {
-        return await context.VehicleModelBodyTypes
+        return await DataContext.VehicleModelBodyTypes
             .AnyAsync(x => x.VehicleModelId == modelId && x.BodyTypeId == bodyTypeId);
+    }
+
+    private static IQueryable<VehicleListing> WithListingDetails(IQueryable<VehicleListing> query)
+    {
+        return query
+            .Include(l => l.Model)
+                .ThenInclude(m => m!.Brand)
+            .Include(l => l.Model)
+                .ThenInclude(m => m!.VehicleType)
+            .Include(l => l.BodyType)
+            .Include(l => l.Condition)
+            .Include(l => l.City)
+                .ThenInclude(c => c!.Region)
+            .Include(l => l.GearType)
+            .Include(l => l.FuelType)
+            .Include(l => l.Photos.OrderBy(p => p.SortOrder).ThenBy(p => p.Id));
     }
 }
