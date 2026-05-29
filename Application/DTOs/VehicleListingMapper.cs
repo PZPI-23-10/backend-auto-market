@@ -9,35 +9,46 @@ public static class VehicleListingMapper
 {
     public static VehicleListingResponse ToResponseDto(VehicleListing entity)
     {
+        VehicleModel? model = entity.Model;
+        VehicleBrand? brand = model?.Brand;
+        VehicleType? vehicleType = model?.VehicleType;
+        VehicleBodyType? bodyType = entity.BodyType;
+        VehicleCondition? condition = entity.Condition;
+        City? city = entity.City;
+        Region? region = city?.Region;
+        GearType? gearType = entity.GearType;
+        FuelType? fuelType = entity.FuelType;
+
         return new VehicleListingResponse
         {
             Id = entity.Id,
             UserId = entity.UserId,
-            Brand = entity.ModelId != null
-                ? new VehicleBrandResponse { Id = entity.Model!.BrandId, Name = entity.Model.Brand.Name }
+            Brand = brand != null
+                ? new VehicleBrandResponse { Id = brand.Id, Name = brand.Name }
                 : null,
-            Model = entity.ModelId != null
-                ? new VehicleModelResponse { Id = entity.Model!.Id, Name = entity.Model.Name }
+            Model = model != null
+                ? new VehicleModelResponse { Id = model.Id, Name = model.Name }
                 : null,
-            BodyType = entity.BodyTypeId != null
-                ? new VehicleBodyTypeResponse { Id = entity.BodyType!.Id, Name = entity.BodyType.Name }
+            BodyType = bodyType != null
+                ? new VehicleBodyTypeResponse { Id = bodyType.Id, Name = bodyType.Name }
                 : null,
-            Condition = entity.ConditionId != null
-                ? new VehicleConditionResponse { Id = entity.Condition!.Id, Name = entity.Condition.Name }
+            Condition = condition != null
+                ? new VehicleConditionResponse { Id = condition.Id, Name = condition.Name }
                 : null,
-            City =
-                entity.CityId != null ? new CityResponse { Id = entity.City!.Id, Name = entity.City.Name } : null,
-            Region = entity.City != null
-                ? new RegionResponse { Id = entity.City!.Region.Id, Name = entity.City!.Region.Name }
+            City = city != null
+                ? new CityResponse { Id = city.Id, Name = city.Name }
                 : null,
-            GearType = entity.GearTypeId != null
-                ? new GearTypeResponse { Id = entity.GearType!.Id, Name = entity.GearType.Name }
+            Region = region != null
+                ? new RegionResponse { Id = region.Id, Name = region.Name }
                 : null,
-            FuelType = entity.FuelTypeId != null
-                ? new FuelTypeResponse() { Id = entity.FuelType!.Id, Name = entity.FuelType.Name }
+            GearType = gearType != null
+                ? new GearTypeResponse { Id = gearType.Id, Name = gearType.Name }
                 : null,
-            VehicleType = entity.ModelId != null
-                ? new VehicleTypeResponse { Id = entity.Model!.VehicleType.Id, Name = entity.Model.VehicleType.Name }
+            FuelType = fuelType != null
+                ? new FuelTypeResponse { Id = fuelType.Id, Name = fuelType.Name }
+                : null,
+            VehicleType = vehicleType != null
+                ? new VehicleTypeResponse { Id = vehicleType.Id, Name = vehicleType.Name }
                 : null,
 
             Year = entity.Year,
