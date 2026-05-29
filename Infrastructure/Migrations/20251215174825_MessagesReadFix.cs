@@ -1,4 +1,3 @@
-﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,42 +10,33 @@ namespace Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IsRead",
-                table: "ChatMessages");
+            migrationBuilder.Sql("""
+                ALTER TABLE "ChatMessages"
+                DROP COLUMN IF EXISTS "IsRead";
+                """);
 
-            migrationBuilder.CreateTable(
-                name: "ChatMessageReads",
-                columns: table => new
-                {
-                    MessageId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<int>(type: "integer", nullable: false),
-                    ReadAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ChatMessageReads", x => new { x.MessageId, x.UserId });
-                    table.ForeignKey(
-                        name: "FK_ChatMessageReads_ChatMessages_MessageId",
-                        column: x => x.MessageId,
-                        principalTable: "ChatMessages",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            migrationBuilder.Sql("""
+                CREATE TABLE IF NOT EXISTS "ChatMessageReads" (
+                    "MessageId" integer NOT NULL,
+                    "UserId" integer NOT NULL,
+                    "ReadAt" timestamp with time zone NOT NULL,
+                    CONSTRAINT "PK_ChatMessageReads" PRIMARY KEY ("MessageId", "UserId"),
+                    CONSTRAINT "FK_ChatMessageReads_ChatMessages_MessageId" FOREIGN KEY ("MessageId") REFERENCES "ChatMessages" ("Id") ON DELETE CASCADE
+                );
+                """);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ChatMessageReads");
+            migrationBuilder.Sql("""
+                DROP TABLE IF EXISTS "ChatMessageReads";
+                """);
 
-            migrationBuilder.AddColumn<bool>(
-                name: "IsRead",
-                table: "ChatMessages",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            migrationBuilder.Sql("""
+                ALTER TABLE "ChatMessages"
+                ADD COLUMN IF NOT EXISTS "IsRead" boolean NOT NULL DEFAULT FALSE;
+                """);
         }
     }
 }
